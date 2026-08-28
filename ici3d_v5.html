@@ -994,7 +994,7 @@ function animatePipeFlow(t){
 // ═══════════════════════════════════════════════════════
 // #4 — AMBIENT DUST PARTICLES
 // ═══════════════════════════════════════════════════════
-const DUST_COUNT=200;
+const DUST_COUNT=80; // reduced from 200 for performance
 const dustGeo=new THREE.BufferGeometry();
 const dustPositions=new Float32Array(DUST_COUNT*3);
 const dustData=[];
@@ -1005,7 +1005,9 @@ for(let i=0;i<DUST_COUNT;i++){
 }
 dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));
 scene.add(new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0xc8e0f0,size:.04,transparent:true,opacity:.38,sizeAttenuation:true,depthWrite:false})));
+let _dustTick=0;
 function animateDust(dt){
+  _dustTick++;if(_dustTick%2!==0)return; // only update every 2nd frame
   const pos=dustGeo.attributes.position.array;
   for(let i=0;i<DUST_COUNT;i++){
     const p=dustData[i]; p.y+=p.vy*dt*60*.016; p.x+=p.vx; p.z+=p.vz;
@@ -1609,56 +1611,45 @@ const MACHINE_DATA = {
   },
 };
 
+// Machine modal with tabs — no text overload
+let _machTab=0, _machCurrent=null;
 function openMachine(m){
-  const md=MACHINE_DATA[m.id];
-  if(!md) return;
-  const alreadyUpgraded=G.processUpgrades.has(m.id);
-  const canUpgrade=md.upgrade&&G.strategy===md.upgrade.strat&&!alreadyUpgraded;
-
-  const sliders=md.params.map((p,i)=>`
-    <div class="slider-r">
-      <label>${p.label}</label>
-      <input type="range" min="${p.min}" max="${p.max}" value="${p.val}" id="sl-${m.id}-${i}" oninput="document.getElementById('sv-${m.id}-${i}').textContent=this.value">
-      <span class="sv2" id="sv-${m.id}-${i}">${p.val}</span>
-    </div>
-  `).join('');
-
-  const upgradeHTML=canUpgrade?`
-    <div class="ibox gold" style="margin-top:14px">
-      <strong>🔧 Mejora Disponible (Estrategia: ${md.upgrade.strat==='diff'?'Diferenciación':'Costos'})</strong><br>
-      <strong>${md.upgrade.name}:</strong> ${md.upgrade.desc}
-      <br><button class="btn-g" style="margin-top:8px" onclick="applyUpgrade('${m.id}')">Implementar Mejora (+120 pts)</button>
-    </div>
-  `:alreadyUpgraded?`<div class="ibox green" style="margin-top:12px"><strong>✓ Mejora implementada</strong> en esta estación.</div>`:'';
-
-  const body=`
-    <div class="ibox"><strong>${md.name}</strong><br>${md.desc}</div>
-    <span class="sec-l">Ajustar Parámetros de Proceso</span>
-    <div class="mach-card">
-      <h4>⚙ Control de Proceso — ${md.name}</h4>
-      ${sliders}
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-p" onclick="applyMachineParams('${m.id}')">Aplicar Cambios (+80 pts)</button>
-        <button class="btn-s" onclick="closeModal()">Cancelar</button>
-      </div>
-    </div>
-    ${upgradeHTML}
-    <div class="two-col" style="margin-top:12px">
-      <div class="card"><h4>Estado Actual</h4>
-        <div class="stat-r"><span class="sl">Defectos en etapa</span><span class="sv ${G.kpi.defectRate>10?'bad':'good'}">${(G.kpi.defectRate*0.2).toFixed(1)}%</span></div>
-        <div class="stat-r"><span class="sl">Output estimado</span><span class="sv">${Math.round(G.kpi.efficiency*0.45)} ud/min</span></div>
-      </div>
-      <div class="card"><h4>Impacto de Cambios</h4>
-        <p>Ajusta los parámetros en el rango óptimo para mejorar calidad y eficiencia. Valores extremos generan más defectos.</p>
-      </div>
-    </div>
-  `;
-  openModal(`Estación: ${md.name}`,`Procesos Industriales — Fabricación FrescoMax® | Ajusta parámetros y aplica mejoras`,body,[
-    {label:'Cerrar',fn:closeModal}
-  ]);
+  _machCurrent=m; _machTab=0; renderMachTab();
   G.machinesInteracted.add(m.id);
   if(G.machinesInteracted.size>=3){G.zonesComplete.add('pro');updateZoneSidebar();}
 }
+function renderMachTab(){
+  const m=_machCurrent; if(!m) return;
+  const md=MACHINE_DATA[m.id]; if(!md) return;
+  const alreadyUpgraded=G.processUpgrades.has(m.id);
+  const canUpgrade=md.upgrade&&G.strategy===md.upgrade.strat&&!alreadyUpgraded;
+  const tabs=['⚙ Parámetros','🔧 Mejora','📊 Estado'];
+  const tabBar=`<div style="display:flex;gap:4px;margin-bottom:14px">${tabs.map((t,i)=>`<button onclick="_machTab=${i};renderMachTab()" style="flex:1;padding:7px;background:${_machTab===i?'rgba(255,106,0,.18)':'rgba(255,255,255,.04)'};border:1px solid ${_machTab===i?'#ff6a00':'rgba(255,255,255,.1)'};border-radius:6px;color:${_machTab===i?'#ff6a00':'#7a9aaa'};font-size:11px;font-weight:700;cursor:pointer">${t}</button>`).join('')}</div>`;
+  window._machTab=_machTab;
+  let body=tabBar;
+  if(_machTab===0){
+    const sliders=md.params.map((p,i)=>`<div class="slider-r"><label>${p.label}</label><input type="range" min="${p.min}" max="${p.max}" value="${p.val}" id="sl-${m.id}-${i}" oninput="document.getElementById('sv-${m.id}-${i}').textContent=this.value"><span class="sv2" id="sv-${m.id}-${i}">${p.val}</span></div>`).join('');
+    body+=`<div class="mach-card"><h4>⚙ ${md.name}</h4>${sliders}<button class="btn-p" style="margin-top:8px;width:100%" onclick="applyMachineParams('${m.id}')">Aplicar cambios (+80 pts)</button></div>`;
+    // Sebastián tip inline
+    const sebKey=m.id==='mez'?'mezclado':m.id==='hom'?'homogeneizacion':m.id==='lle'?'llenado':m.id==='sel'?'sellado':null;
+    if(sebKey){
+      const sd=SEB_CHEM_DATA[sebKey];
+      body+=`<div class="ibox" style="margin-top:8px;font-size:11px;border-color:#45d4ff44">🧪 <strong style="color:#45d4ff">Sebastián dice:</strong> T° óptima <strong style="color:#ff6600">${sd.temp}</strong> · Tiempo: <strong style="color:#45d4ff">${sd.time}</strong><br><span style="color:#5a7a8a">${sd.notes.split('.')[0]}.</span></div>`;
+    }
+  } else if(_machTab===1){
+    if(canUpgrade){
+      body+=`<div class="ibox gold"><strong>🔧 ${md.upgrade.name}</strong><br><span style="font-size:11px">${md.upgrade.desc}</span></div><button class="btn-g" style="margin-top:10px;width:100%" onclick="applyUpgrade('${m.id}')">Implementar (+120 pts)</button>`;
+    } else if(alreadyUpgraded){
+      body+=`<div class="ibox green"><strong>✓ Mejora ya implementada</strong></div>`;
+    } else {
+      body+=`<div class="ibox">Esta mejora requiere estrategia <strong>${md.upgrade?.strat==='diff'?'Diferenciación':'Costos'}</strong>.</div>`;
+    }
+  } else {
+    body+=`<div class="card"><div class="stat-r"><span class="sl">Defectos en etapa</span><span class="sv ${G.kpi.defectRate>10?'bad':'good'}">${(G.kpi.defectRate*0.2).toFixed(1)}%</span></div><div class="stat-r"><span class="sl">Output estimado</span><span class="sv">${Math.round(G.kpi.efficiency*0.45)} ud/min</span></div><div class="stat-r"><span class="sl">Estado</span><span class="sv good">Operativa</span></div></div>`;
+  }
+  openModal(`⚙ ${md.name}`,'Producción FrescoMax®',body,[{label:'Cerrar',fn:closeModal}]);
+}
+window.renderMachTab=renderMachTab;
 
 window.applyMachineParams=function(mid){
   applyKPI({quality:Math.round(Math.random()*6+3), efficiency:Math.round(Math.random()*5+3)});
@@ -1875,61 +1866,67 @@ function showISOModule(step){
 // ═══════════════════════════════════════════════════════
 // ZONE: CALIDAD
 // ═══════════════════════════════════════════════════════
+// Quality modal with tabs (no text overload)
+let _qualTab=0;
 function openQuality(){
-  const placedNames=G.inspections.map(i=>i.name).join(', ')||'Ninguno';
-  const body=`
-  <div class="two-col">
-    <div>
-      <div class="ibox"><strong>Sistema de Calidad — FrescoMax®</strong><br>La tasa de defectos actual es <strong style="color:${G.kpi.defectRate>10?'#ff5050':'#79df4b'}">${G.kpi.defectRate.toFixed(1)}%</strong>. Los defectos principales son: bajo peso de relleno (30%), sello deficiente (25%), inconsistencia de pasta (25%), daño de empaque (20%).</div>
-      <span class="sec-l">Puntos de Inspección Activos</span>
-      ${G.inspections.length===0?
-        '<div class="ibox red">No has colocado ningún punto de control. Presiona <strong>[Q]</strong> para activar el modo inspección y luego <strong>[E]</strong> junto a cada máquina para colocar un control.</div>'
-        :`<div class="ibox green">${G.inspections.length} inspecciones activas: <strong>${placedNames}</strong></div>`
-      }
-      <div class="ibox gold"><strong>💡 Principio clave ISO 9001:</strong> Una inspección <em>al inicio</em> del proceso evita que el defecto se <em>propague</em> a las etapas siguientes. Un defecto detectado en el tanque mezclador cuesta solo el material. Detectado al empacar, cuesta todo el proceso.</div>
-    </div>
-    <div>
-      <span class="sec-l">Contribución de Defectos por Etapa</span>
-      ${MACHINES.map((m,i)=>{
-        const inspHere=G.inspections.some(ins=>ins.machineId===m.id);
-        const baseRate=[4,3.5,3,2.5,2.5,1.5][i];
-        const caught=inspHere?baseRate*.85:0;
-        return `<div class="insp-slot ${inspHere?'placed':''}">
-          <span class="is-icon">${inspHere?'🔍':'⚙'}</span>
-          <div class="is-info"><div class="is-name">${m.name}</div><div class="is-sub">${baseRate.toFixed(1)}% defectos base${inspHere?` → ${(baseRate-caught).toFixed(1)}% tras inspección`:''}</div></div>
-          <div class="is-impact" style="color:${inspHere?'#79df4b':'#5a7a8a'}">${inspHere?`-${caught.toFixed(1)}%<br>detectado`:'Sin control'}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>
-
-  <span class="sec-l">Acciones Adicionales de Calidad</span>
-  <div class="three-col">
-    <div class="card" style="cursor:pointer;border-color:${G.providerNegotiated?'rgba(121,223,75,.3)':'rgba(255,255,255,.07)'}" onclick="doNegotiate()">
-      <h4>${G.providerNegotiated?'✓ ':''} Negociación con Proveedores</h4>
-      <p>Exigir certificación de calidad a proveedores de MP. Reduce defectos de origen en -4%.</p>
-      ${!G.providerNegotiated?'<button class="btn-s" style="margin-top:8px;font-size:11px" onclick="doNegotiate()">Negociar</button>':'<div class="tag gr">Completado</div>'}
-    </div>
-    <div class="card" style="cursor:pointer;border-color:${G.auditDone?'rgba(121,223,75,.3)':'rgba(255,255,255,.07)'}" onclick="doAudit()">
-      <h4>${G.auditDone?'✓ ':''} Auditoría Interna ISO</h4>
-      <p>Realiza una auditoría interna del sistema. Identifica no conformidades antes de la certificación.</p>
-      ${!G.auditDone?'<button class="btn-s" style="margin-top:8px;font-size:11px" onclick="doAudit()">Auditar</button>':'<div class="tag gr">Completado</div>'}
-    </div>
-    <div class="card">
-      <h4>Control Estadístico (SPC)</h4>
-      <p>Monitoreo continuo de media y varianza del proceso para detectar tendencias antes de producir defectos.</p>
-      <div class="tag c" style="margin-top:8px">Activo</div>
-    </div>
-  </div>
-
-  <div class="ibox" style="margin-top:12px"><strong>Modo Inspección:</strong> Presiona <strong>[Q]</strong> en cualquier momento para colocar/quitar inspecciones en la línea. Tienes ${G.MAX_INSP - G.inspections.length} puntos disponibles.</div>
-  `;
-  openModal('Gestión de Calidad — TechDent Chile','ISO 9001 · Inspección y control de defectos · FrescoMax®',body,[
-    {label:'Activar Modo Inspección [Q]',cls:'btn-g',fn:()=>{closeModal();toggleInspMode();}},
-    {label:'Cerrar',fn:closeModal}
-  ]);
+  _qualTab=0; renderQualityTab();
   G.zonesComplete.add('cal'); updateZoneSidebar();
 }
+function renderQualityTab(){
+  const tabs=['🔍 Inspecciones','📊 Defectos','⚙ Acciones'];
+  const tabBar=`<div style="display:flex;gap:4px;margin-bottom:14px">${tabs.map((t,i)=>`<button onclick="_qualTab=${i};renderQualityTab()" style="flex:1;padding:7px;background:${_qualTab===i?'rgba(239,180,28,.18)':'rgba(255,255,255,.04)'};border:1px solid ${_qualTab===i?'#efb41c':'rgba(255,255,255,.1)'};border-radius:6px;color:${_qualTab===i?'#efb41c':'#7a9aaa'};font-size:11px;font-weight:700;cursor:pointer">${t}</button>`).join('')}</div>`;
+  window._qualTab=_qualTab;
+  let body=tabBar;
+  if(_qualTab===0){
+    // Tab 1: Inspections only
+    const placedNames=G.inspections.map(i=>i.name).join(', ')||'Ninguno';
+    body+=G.inspections.length===0
+      ?`<div class="ibox red">Aún no hay inspecciones. Presiona <strong>[Q]</strong> y luego <strong>[E]</strong> junto a cada máquina.</div>`
+      :`<div class="ibox green">✓ ${G.inspections.length} activas: <strong>${placedNames}</strong></div>`;
+    body+=`<div class="ibox gold" style="margin-top:10px"><strong>💡 ISO 9001:</strong> Inspeccionar al inicio del proceso cuesta 10× menos que detectar el defecto al empacar.</div>`;
+    body+=`<button class="btn-g" style="margin-top:12px;width:100%" onclick="closeModal();toggleInspMode()">🔍 Activar Modo Inspección [Q]</button>`;
+  } else if(_qualTab===1){
+    // Tab 2: Defect breakdown
+    body+=`<div style="margin-bottom:8px;font-size:12px;color:#e0e8ef">Tasa de defectos actual: <strong style="color:${G.kpi.defectRate>10?'#ff5050':'#79df4b'}">${G.kpi.defectRate.toFixed(1)}%</strong></div>`;
+    body+=MACHINES.map((m,i)=>{
+      const inspHere=G.inspections.some(ins=>ins.machineId===m.id);
+      const baseRate=[4,3.5,3,2.5,2.5,1.5][i];
+      const caught=inspHere?baseRate*.85:0;
+      return `<div class="insp-slot ${inspHere?'placed':''}">
+        <span class="is-icon">${inspHere?'🔍':'⚙'}</span>
+        <div class="is-info"><div class="is-name">${m.name}</div><div class="is-sub">${inspHere?`Controlado → ${(baseRate-caught).toFixed(1)}%`:`${baseRate.toFixed(1)}% defectos`}</div></div>
+        <div class="is-impact" style="color:${inspHere?'#79df4b':'#5a7a8a'}">${inspHere?`-${caught.toFixed(1)}%`:'Sin control'}</div>
+      </div>`;
+    }).join('');
+  } else {
+    // Tab 3: Actions
+    body+=`<div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card" style="cursor:pointer;border-color:${G.providerNegotiated?'rgba(121,223,75,.3)':'rgba(255,255,255,.07)'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h4 style="margin:0">${G.providerNegotiated?'✓ ':''} Negociar Proveedores</h4>
+          ${!G.providerNegotiated?`<button class="btn-s" style="font-size:10px;padding:4px 10px" onclick="doNegotiate()">Negociar → -4% defectos</button>`:`<div class="tag gr">Completado</div>`}
+        </div>
+      </div>
+      <div class="card" style="cursor:pointer;border-color:${G.auditDone?'rgba(121,223,75,.3)':'rgba(255,255,255,.07)'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h4 style="margin:0">${G.auditDone?'✓ ':''} Auditoría ISO Interna</h4>
+          ${!G.auditDone?`<button class="btn-s" style="font-size:10px;padding:4px 10px" onclick="doAudit()">Auditar → +8% calidad</button>`:`<div class="tag gr">Completado</div>`}
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h4 style="margin:0">Control Estadístico (SPC)</h4>
+          <div class="tag c">Activo</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:#5a7a8a;margin-top:10px">Puntos disponibles: ${G.MAX_INSP - G.inspections.length} / ${G.MAX_INSP}</div>`;
+  }
+  openModal('🔬 Calidad — TechDent','ISO 9001 · FrescoMax®',body,[
+    {label:'Cerrar',fn:closeModal}
+  ]);
+}
+window.renderQualityTab=renderQualityTab;
 
 window.doNegotiate=function(){
   if(G.providerNegotiated){return;}
@@ -2344,66 +2341,79 @@ function checkWinCondition(){
 
 function showFinalResult(){
   G.resultShown=true;
-  const rank=G.score>=1200?'Directivo A+':G.score>=900?'Ingeniero Senior':G.score>=600?'Ingeniero Junior':'Trainee';
+  const rank=G.score>=1400?'🥇 Directivo A+':G.score>=1000?'🥈 Ingeniero Senior':G.score>=600?'🥉 Ingeniero Junior':'📋 Trainee';
   const kpi=G.kpi;
+  // Dynamic final radar — TechDent values from player's actual KPIs
+  const techQ=Math.min(1,kpi.quality/100);
+  const techE=Math.min(1,kpi.efficiency/100);
+  const techM=Math.min(1,kpi.morale/100);
+  const techD=Math.max(0,1-kpi.defectRate/100);
+  const techBrand=G.strategy==='diff'?Math.min(1,(techQ+techE)/2+.2):Math.min(1,(techE+techD)/2);
   document.getElementById('result').style.display='flex';
   document.getElementById('result').innerHTML=`
     <div style="width:min(900px,96vw)">
-      <div style="text-align:center;margin-bottom:30px">
-        <div style="font-size:11px;color:#3a6070;letter-spacing:4px;margin-bottom:8px">EVALUACIÓN FINAL · TECHDENT CHILE S.A.</div>
-        <h1 style="font-size:clamp(36px,6vw,72px);font-weight:900;background:linear-gradient(90deg,#00e5cc,#efb41c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:10px">ICI KEEPER COMPLETADO</h1>
-        <div style="font-size:22px;color:#efb41c;font-weight:800">${rank}</div>
-        <div style="font-size:60px;font-weight:900;color:#fff;margin:10px 0">${G.score} pts</div>
-        ${G.strategy?`<div style="font-size:13px;color:#7a9aaa">Estrategia elegida: <strong style="color:${G.strategy==='diff'?'#00e5cc':'#efb41c'}">${G.strategy==='diff'?'🎯 Diferenciación':'💰 Liderazgo en Costos'}</strong></div>`:''}
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:11px;color:#3a6070;letter-spacing:4px;margin-bottom:6px">EVALUACIÓN FINAL · TECHDENT CHILE S.A.</div>
+        <h1 style="font-size:clamp(28px,5vw,56px);font-weight:900;background:linear-gradient(90deg,#00e5cc,#efb41c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:8px">ICI KEEPER COMPLETADO</h1>
+        <div style="font-size:20px;color:#efb41c;font-weight:800">${rank}</div>
+        <div style="font-size:52px;font-weight:900;color:#fff;margin:8px 0">${G.score} pts</div>
+        ${G.strategy?`<div style="font-size:12px;color:#7a9aaa">Estrategia: <strong style="color:${G.strategy==='diff'?'#00e5cc':'#efb41c'}">${G.strategy==='diff'?'🎯 Diferenciación':'💰 Liderazgo en Costos'}</strong> · Juan Seiffert: <strong style="color:${G.juanDefeated?'#79df4b':'#ff5050'}">${G.juanDefeated?'✓ Derrotado':'No confrontado'}</strong></div>`:''}
       </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-        ${[
-          {l:'Calidad del Producto',v:kpi.quality,c:'#79df4b',target:80},
-          {l:'Eficiencia Operacional',v:kpi.efficiency,c:'#45d4ff',target:85},
-          {l:'Moral del Equipo',v:kpi.morale,c:'#c87fff',target:75},
-          {l:'Tasa de Defectos',v:kpi.defectRate,c:'#ff5050',target:5,inv:true},
-        ].map(k=>`
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:11px;color:#5a7a8a">${k.l}</span>
-              <span style="font-size:18px;font-weight:900;color:${k.c}">${Math.round(k.v)}%</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" style="background:${k.c};width:${k.inv?Math.min(100,k.target/Math.max(.1,k.v)*100):Math.min(100,k.v/100*100)}%"></div></div>
-            <div style="font-size:9px;color:#3a6070;margin-top:3px">Meta: ${k.inv?'< '+k.target:'> '+k.target}%</div>
-          </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        ${[{l:'Calidad',v:kpi.quality,c:'#79df4b'},{l:'Eficiencia',v:kpi.efficiency,c:'#45d4ff'},{l:'Moral',v:kpi.morale,c:'#c87fff'},{l:'Defectos',v:kpi.defectRate,c:'#ff5050',inv:true}].map(k=>`
+          <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:10px;color:#5a7a8a">${k.l}</span><span style="font-size:16px;font-weight:900;color:${k.c}">${Math.round(k.v)}%</span>
+          </div><div class="progress-bar"><div class="progress-fill" style="background:${k.c};width:${k.inv?Math.max(0,100-k.v):k.v}%"></div></div></div>
         `).join('')}
       </div>
-
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">
-        ${['dec','pro','per','cal','log'].map((z,i)=>{
-          const done=G.zonesComplete.has(z);
-          const names=['Decisiones','Procesos','Personas','Calidad','Logística'];
-          const colors=['#00e5cc','#ff6a00','#c87fff','#efb41c','#79df4b'];
-          return `<div class="card" style="text-align:center;border-color:${done?colors[i]+'44':'rgba(255,255,255,.07)'}">
-            <div style="font-size:24px;margin-bottom:5px">${done?'✅':'⬜'}</div>
-            <div style="font-size:10px;color:${done?colors[i]:'#3a6070'};font-weight:700">${names[i]}</div>
-          </div>`;
-        }).join('')}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div class="card">
+          <h4 style="margin-bottom:10px;color:#efb41c">📊 Benchmark Final — Posición TechDent</h4>
+          <canvas id="final-radar" width="240" height="240"></canvas>
+          <div style="font-size:9px;color:#3a6070;margin-top:6px;text-align:center">🟢 = TechDent inicio · 🔵 = TechDent AHORA · otros = competidores</div>
+        </div>
+        <div class="card">
+          <h4 style="margin-bottom:8px;color:#efb41c">📋 Resumen Ejecutivo</h4>
+          <p style="color:#8aa0a8;font-size:11px;line-height:1.7">${G.strategy==='diff'?`Estrategia de <strong style="color:#00e5cc">Diferenciación</strong>: FrescoMax® Premium ya tiene contrato con Cruz Verde. Con ISO 9001 implementado y equipo certificado, TechDent ocupa el segmento premium.`:`Estrategia de <strong style="color:#efb41c">Costos</strong>: La eficiencia operacional subió. Con rutas optimizadas y proveedores negociados, TechDent puede competir en precio y ganar por volumen.`}</p>
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px">
+            ${['dec','pro','per','cal','log'].map((z,i)=>{const done=G.zonesComplete.has(z);const n=['Dec','Pro','Per','Cal','Log'][i];const c=['#00e5cc','#ff6a00','#c87fff','#efb41c','#79df4b'][i];return `<div style="padding:4px 10px;border-radius:4px;font-size:9px;font-weight:700;background:${done?c+'22':'rgba(255,255,255,.04)'};color:${done?c:'#3a6070'};border:1px solid ${done?c+'55':'rgba(255,255,255,.07)'}">${done?'✓ ':''} ${n}</div>`;}).join('')}
+          </div>
+        </div>
       </div>
-
-      <div style="background:#060e18;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:20px;margin-bottom:20px">
-        <h4 style="color:#efb41c;margin-bottom:10px">📋 Resumen Ejecutivo — TechDent Chile</h4>
-        <p style="color:#8aa0a8;line-height:1.7;font-size:13px">
-          Lideraste la implementación del Sistema de Gestión de Calidad ISO 9001 en TechDent Chile.
-          ${G.strategy==='diff'?'La estrategia de <strong style="color:#00e5cc">diferenciación</strong> permitirá posicionar FrescoMax® como producto premium, aumentando el margen por unidad en un 35%.':
-            'La estrategia de <strong style="color:#efb41c">liderazgo en costos</strong> incrementó la producción y reducirá el costo unitario, permitiendo competir agresivamente en precio.'}
-          Con ${G.inspections.length} puntos de control de calidad instalados${G.inspections.some(i=>i.x<=-12)?' y detección temprana de defectos en el proceso,':','}
-          ${G.hiredCandidates.size} nuevos colaboradores contratados y ${G.trainedWorkers} trabajadores certificados ISO 9001,
-          TechDent está lista para su auditoría de certificación.
-        </p>
-      </div>
-
-      <div style="text-align:center">
-        <button class="btn-g" style="font-size:15px;padding:14px 40px" onclick="location.reload()">↺ Jugar de Nuevo</button>
-      </div>
+      <div style="text-align:center"><button class="btn-g" style="font-size:14px;padding:12px 36px" onclick="location.reload()">↺ Jugar de Nuevo</button></div>
     </div>
   `;
+  // Draw final radar with updated TechDent position
+  requestAnimationFrame(()=>{
+    const cv=document.getElementById('final-radar');if(!cv)return;
+    drawFinalRadar(cv,techQ,techE,techBrand,techD,techM);
+  });
+  // Flag Juan defeated
+  G.juanDefeated=true;
+}
+
+function drawFinalRadar(cv,q,e,brand,d,m){
+  const ctx=cv.getContext('2d');
+  const cx=120,cy=120,R=88;
+  const axes=['Calidad','Eficiencia','Marca','Bajos Def.','Moral'];
+  const datasets=[
+    {name:'TechDent inicio', color:'#00e5cc88', vals:[0.58,0.72,0.5,0.86,0.58]},
+    {name:'TechDent AHORA',  color:'#00e5cc',   vals:[q,e,brand,d,m]},
+    {name:'BrillaDent',      color:'#4488ff88', vals:[0.88,0.65,0.85,0.92,0.6]},
+    {name:'MaxBlanco',       color:'#ff660088', vals:[0.45,0.88,0.4,0.7,0.45]},
+  ];
+  ctx.clearRect(0,0,240,240);
+  [.25,.5,.75,1].forEach(r=>{
+    ctx.beginPath();axes.forEach((a,i)=>{const ang=i*2*Math.PI/axes.length-Math.PI/2;const x=cx+R*r*Math.cos(ang),y=cy+R*r*Math.sin(ang);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=1;ctx.stroke();
+  });
+  axes.forEach((a,i)=>{const ang=i*2*Math.PI/axes.length-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(ang),cy+R*Math.sin(ang));ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#8aa0a8';ctx.font='9px Arial';ctx.textAlign='center';ctx.fillText(a,cx+(R+13)*Math.cos(ang),cy+(R+13)*Math.sin(ang)+3);});
+  datasets.forEach((ds,di)=>{
+    ctx.beginPath();ds.vals.forEach((v,i)=>{const ang=i*2*Math.PI/axes.length-Math.PI/2;const x=cx+R*v*Math.cos(ang),y=cy+R*v*Math.sin(ang);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.closePath();ctx.strokeStyle=ds.color;ctx.lineWidth=di===1?2.5:1.5;ctx.stroke();ctx.fillStyle=ds.color.replace(/[^,]+\)$/,'0.12)');ctx.fill();
+  });
+  // Legend
+  datasets.forEach((ds,i)=>{ctx.fillStyle=ds.color;ctx.fillRect(4,190+i*12,8,8);ctx.fillStyle='#7a9aaa';ctx.font='8px Arial';ctx.textAlign='left';ctx.fillText(ds.name,16,197+i*12);});
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2493,8 +2503,10 @@ function calcLineSpeedModifier(){
 }
 
 let chemIncidentFlag=false;
+let _workerAITick=0;
 function updateWorkerAI(dt){
   const BRX=-55,BRZ=18;
+  _workerAITick++;
   WORKERS.forEach((w,i)=>{
     const wd=workerData[i];const wm=workerMeshes[i];
     wd.stateTimer-=dt;if(wd.incentiveCooldown>0) wd.incentiveCooldown-=dt;
@@ -2513,13 +2525,17 @@ function updateWorkerAI(dt){
     wm.group.position.y=Math.sin(Date.now()*.0018+i)*.03;
     if(w.mood<25) wm.group.rotation.z=Math.sin(Date.now()*.001+i)*.06;
     else wm.group.rotation.z=0;
-    // Update IOBJ pos so proximity detection follows worker
-    const io=IOBJ.find(o=>o.id==='worker_'+i);
-    if(io) io.pos.set(wm.group.position.x,0,wm.group.position.z);
-    // Chemical zone danger check
-    const chemD=Math.hypot(wm.group.position.x-42,wm.group.position.z-(-18));
-    if(chemD<4&&!G.chemTrainingDone&&!G.workerIncidentFired&&!chemIncidentFlag){
-      chemIncidentFlag=true;setTimeout(()=>triggerChemIncident(w,i),2200);
+    // Update IOBJ pos every 10 frames (not every frame) to reduce IOBJ.find overhead
+    if(_workerAITick%10===i%10){
+      const io=IOBJ.find(o=>o.id==='worker_'+i);
+      if(io) io.pos.set(wm.group.position.x,0,wm.group.position.z);
+    }
+    // Chemical zone danger check — throttled
+    if(_workerAITick%60===0){
+      const chemD=Math.hypot(wm.group.position.x-42,wm.group.position.z-(-18));
+      if(chemD<4&&!G.chemTrainingDone&&!G.workerIncidentFired&&!chemIncidentFlag){
+        chemIncidentFlag=true;setTimeout(()=>triggerChemIncident(w,i),2200);
+      }
     }
   });
 }
@@ -2541,39 +2557,96 @@ function triggerChemIncident(w,wi){
 }
 
 // ── WORKER INTERACTION MODAL ─────────────────────────────
+// Track per-worker social cooldowns and respect level
+const WORKER_SOCIAL={};
+WORKERS.forEach((w,i)=>{WORKER_SOCIAL[i]={footballCd:0,barCd:0,respectLoss:0};});
+
 function openWorkerModal(idx){
-  const w=WORKERS[idx];const wd=workerData[idx];
+  const w=WORKERS[idx];const wd=workerData[idx];const ws=WORKER_SOCIAL[idx];
   const mc=w.mood>80?'#39ff14':w.mood>55?'#efb41c':w.mood>30?'#ff6600':'#ff1111';
   const ml=w.mood>80?'Excelente 😄':w.mood>60?'Bien 🙂':w.mood>40?'Regular 😐':w.mood>20?'Mal 😟':'Muy mal 😭';
-  const quote=getWorkerQuote(w);
-  const machName=w.machineId&&MACHINES.find(m=>m.id===w.machineId)?.name;
+  const funnyLines=[
+    '"Jefe, ayer soñé que la llenadora hablaba y me pedía vacaciones."',
+    '"¿Sabía que el tanque mezclador lleva más horas que yo en la empresa?"',
+    '"La pasta de ayer olía a menta con algo... ¿Puso orégano alguien?"',
+    '"Marco dijo que puede llenar tubos más rápido que la máquina. Le aposté $500."',
+    '"Me contaron que la máquina selladora tiene nombre: la llaman La Muñeca."',
+  ];
+  const funnyQuote=funnyLines[Math.floor(Math.random()*funnyLines.length)];
+  const respWarn=ws.respectLoss>=2?`<div class="ibox red" style="font-size:10px;margin-bottom:8px">⚠ <strong>Alerta:</strong> Salidas frecuentes están afectando tu autoridad. ${w.name} llega tarde al turno.</div>`:'';
   openModal(w.name,w.role,`
-  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px">
-    <div style="font-size:52px">${w.icon}</div>
-    <div style="flex:1"><div style="font-size:15px;font-weight:700;color:${w.hue}">${w.name}</div>
-    <div style="font-size:10px;color:#5a7a8a;margin-bottom:6px">${w.role}</div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div style="background:${mc}20;border:1px solid ${mc};border-radius:4px;padding:2px 10px;font-size:10px;font-weight:700;color:${mc}">${ml}</div>
-      <span style="font-size:11px;font-weight:700;color:${mc}">${w.mood}%</span>
-    </div></div>
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+    <div style="font-size:44px">${w.icon}</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700;color:${w.hue}">${w.name} · ${w.role}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <div style="background:${mc}20;border:1px solid ${mc};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:${mc}">${ml} · ${w.mood}%</div>
+        ${ws.respectLoss>0?`<div style="font-size:9px;color:#ff5050">⚠ Respeto -${ws.respectLoss*15}%</div>`:''}
+      </div>
+    </div>
   </div>
-  <div class="progress-bar"><div class="progress-fill" style="background:${mc};width:${w.mood}%"></div></div>
-  ${machName?`<div class="ibox" style="margin-top:10px;font-size:11px"><strong>Efecto en producción:</strong> ${machName} corre al <strong style="color:${w.mood>60?'#79df4b':'#ff5050'}">${w.mood>80?'+15%':w.mood>55?'100%':w.mood>30?'-15%':'-30%'}</strong></div>`:''}
-  <div class="ibox gold" id="w-chat" style="font-size:13px;font-style:italic;min-height:44px">"${quote}"</div>
-  <span class="sec-l" style="margin-top:10px">¿Qué harás?</span>
-  <div style="display:flex;flex-direction:column;gap:7px">
-    <button class="btn-s" style="text-align:left;padding:10px 14px" onclick="wChat(${idx})">💬 ¿Cómo estuvo tu día? <span style="color:#79df4b;font-size:10px;float:right">GRATIS · +5 ánimo</span></button>
-    <button class="${G.budget>=200000&&!wd.incentiveCooldown?'btn-p':'btn-s'}" style="text-align:left;padding:10px 14px" onclick="wIncentive(${idx})" ${wd.incentiveCooldown>0?'disabled':''}>
-      💰 Dar bono económico <span style="color:#efb41c;font-size:10px;float:right">-$200.000 · +25 ánimo ${wd.incentiveCooldown>0?'(cooldown)':''}</span>
-    </button>
-    <button class="btn-s" style="text-align:left;padding:10px 14px" onclick="wPraise(${idx})" ${wd.praiseUsed?'disabled style="opacity:.45"':''}>
-      ⭐ Reconocer trabajo <span style="color:#c87fff;font-size:10px;float:right">GRATIS · +10 ánimo ${wd.praiseUsed?'(ya usado)':''}</span>
-    </button>
-    <button class="btn-danger" style="text-align:left;padding:10px 14px" onclick="wHit(${idx})">
-      👊 Agresión física <span style="font-size:10px;float:right">⚠ -$500.000 · -35 ánimo · LEGAL</span>
-    </button>
+  <div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="background:${mc};width:${w.mood}%"></div></div>
+  ${respWarn}
+  <div class="ibox gold" style="font-size:12px;font-style:italic;margin-bottom:10px">${funnyQuote}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+    <button class="btn-s" style="padding:10px;text-align:left" onclick="wChat(${idx})">💬 Conversar<br><span style="font-size:9px;color:#79df4b">+5 ánimo · GRATIS</span></button>
+    <button class="btn-s" style="padding:10px;text-align:left" onclick="wPraise(${idx})" ${wd.praiseUsed?'disabled':''}>⭐ Reconocer<br><span style="font-size:9px;color:#c87fff">+10 ánimo ${wd.praiseUsed?'· usado':''}</span></button>
+    <button class="${G.budget>=200000&&!wd.incentiveCooldown?'btn-p':'btn-s'}" style="padding:10px;text-align:left" onclick="wIncentive(${idx})" ${wd.incentiveCooldown>0?'disabled':''}>💰 Bono<br><span style="font-size:9px;color:#efb41c">-$200k · +25 ánimo${wd.incentiveCooldown>0?' · espera':''}</span></button>
+    <button class="btn-s" style="padding:10px;text-align:left;border-color:rgba(0,229,204,.3)" onclick="wFootball(${idx})" ${ws.footballCd>0?'disabled':''}>⚽ Partido de Fútbol<br><span style="font-size:9px;color:#00e5cc">+20 ánimo · ${ws.footballCd>0?'descansando':'¡Disponible!'}</span></button>
+    <button class="btn-s" style="padding:10px;text-align:left;border-color:rgba(239,180,28,.3);${ws.barCd>0||ws.respectLoss>=3?'opacity:.5':''}" onclick="wBar(${idx})" ${ws.barCd>0||ws.respectLoss>=3?'disabled':''}>🍺 Salir a tomar<br><span style="font-size:9px;color:#efb41c">${ws.respectLoss>=3?'Ya perdiste respeto':ws.barCd>0?'en cooldown':'¡Después del turno!'}</span></button>
+    <button class="btn-danger" style="padding:10px;text-align:left" onclick="wHit(${idx})">👊 Agresión<br><span style="font-size:9px">-$500k · ADVERTENCIA</span></button>
   </div>`,[{label:'Cerrar',fn:closeModal}]);
 }
+
+window.wFootball=function(idx){
+  const w=WORKERS[idx];const ws=WORKER_SOCIAL[idx];
+  if(ws.footballCd>0){notify('warn','Muy pronto','Dale tiempo al equipo para recuperarse.');return;}
+  ws.footballCd=1;
+  // Fun mini result
+  const results=[
+    {txt:`¡Ganaron 3-1! ${w.name} metió dos goles y llegó bailando a la línea de producción.`,mood:20,eff:5},
+    {txt:`Empataron 2-2. ${w.name} atajó de cabeza... con la cara. Todos se rieron mucho.`,mood:15,eff:3},
+    {txt:`Perdieron 4-0. ${w.name} dice que el árbitro estaba pagado por la competencia.`,mood:10,eff:-2},
+    {txt:`${w.name} anotó un autogol épico que todavía recuerdan. Pero fue divertido.`,mood:12,eff:0},
+  ];
+  const r=results[Math.floor(Math.random()*results.length)];
+  w.mood=Math.min(100,w.mood+r.mood);
+  applyKPI({morale:Math.round(r.mood/3),efficiency:r.eff});
+  addScore(60);
+  updateWorkerMoods();
+  closeModal();
+  showStory(w.name,`"${r.txt}"`);
+  notify('success','⚽ ¡Partidazo!',`${w.name} feliz. Ánimo +${r.mood}%.`);
+  // Warn if done too often
+  if(ws.respectLoss>0) notify('warn','⚠ Límite social',`Con ${ws.respectLoss+1} actividades sociales esta semana, el equipo empieza a tutear al jefe.`);
+};
+
+window.wBar=function(idx){
+  const w=WORKERS[idx];const ws=WORKER_SOCIAL[idx];
+  if(ws.barCd>0||ws.respectLoss>=3) return;
+  ws.barCd=1; ws.respectLoss++;
+  const scenes=[
+    {txt:`Dos cervezas después, ${w.name} te contó que la selladora lleva 3 meses con una fuga que nadie reportó.`,bonus:'calidad',mood:15},
+    {txt:`${w.name} bailó en la barra y ahora todos lo llaman "El Técnico de la Discoteca".`,bonus:'moral',mood:18},
+    {txt:`Después de tres tragos, ${w.name} reveló que el proveedor de sílice cobra de más. Información valiosa.`,bonus:'costo',mood:12},
+    {txt:`${w.name}: "Jefe... con respeto... a veces llega tarde y eso nos desmotiva un poco." Fue honesto.`,bonus:'honesto',mood:8},
+  ];
+  const s=scenes[Math.floor(Math.random()*scenes.length)];
+  w.mood=Math.min(100,w.mood+s.mood);
+  if(s.bonus==='calidad') applyKPI({defectRate:-3,quality:5});
+  else if(s.bonus==='moral') applyKPI({morale:10});
+  else if(s.bonus==='costo') {G.budget=Math.min(G.budget+100000,5000000);updateBudgetHUD();}
+  addScore(50);
+  updateWorkerMoods();
+  closeModal();
+  showStory(w.name,`"${s.txt}"`);
+  notify('success','🍺 Buena salida',`${w.name} ánimo +${s.mood}%.`);
+  // Respect warning
+  if(ws.respectLoss===1) notify('warn','⚠ Respeto -15%','Las salidas frecuentes son buenas para el ambiente, pero si abusan el equipo pierde el respeto al jefe. Modera.');
+  if(ws.respectLoss===2) notify('warn','⚠ Respeto -30%',`${w.name} llega 20 min tarde al turno. El equipo se ríe de tus llamados de atención.`);
+  if(ws.respectLoss>=3){applyKPI({efficiency:-8,morale:-5});notify('bad','❌ Crisis de autoridad','Has salido demasiadas veces. El equipo no sigue instrucciones con la misma seriedad. Eficiencia -8%.');}
+};
+
 function getWorkerQuote(w){
   const qs=w.mood>80?['¡Todo perfecto jefe! La línea está volando hoy.','Buen ambiente en la planta, se trabaja con gusto.','La ISO 9001 realmente se nota en el día a día.']:
     w.mood>55?['Bien, gracias. Todo corriendo sin novedad.','Mañana tenemos mantenimiento, hay que coordinar.','La máquina tuvo un detalle esta mañana pero ya está.']:
@@ -2581,9 +2654,9 @@ function getWorkerQuote(w){
     ['Estoy muy mal. Prefiero no hablar.','...','No me siento cómodo en este trabajo.'];
   return qs[Math.floor(Math.random()*qs.length)];
 }
-window.wChat=function(idx){const w=WORKERS[idx];w.mood=Math.min(100,w.mood+5);updateWorkerMoods();notify('info','Conversación','Charlaste con '+w.name+'. Ánimo +5%.');document.getElementById('w-chat').innerHTML=`"Gracias por preguntar, jefe. Se agradece que se preocupen." — <em>${w.name}</em>`;};
+window.wChat=function(idx){const w=WORKERS[idx];w.mood=Math.min(100,w.mood+5);updateWorkerMoods();notify('info','Conversación','Charlaste con '+w.name+'. Ánimo +5%.');closeModal();};
 window.wIncentive=function(idx){const w=WORKERS[idx];const wd=workerData[idx];if(!spendBudget(200000,'Bono para '+w.name))return;w.mood=Math.min(100,w.mood+25);wd.incentiveCooldown=300;updateWorkerMoods();applyKPI({morale:3});addScore(40);notify('success','Bono Otorgado',w.name+' recibió $200.000 CLP. Ánimo +25%.');closeModal();};
-window.wPraise=function(idx){const w=WORKERS[idx];const wd=workerData[idx];if(wd.praiseUsed)return;wd.praiseUsed=true;w.mood=Math.min(100,w.mood+10);updateWorkerMoods();addScore(20);document.getElementById('w-chat').innerHTML=`"¡Gracias jefe! Eso me da energía para seguir." — <em>${w.name}</em>`;notify('success','Reconocimiento','¡'+w.name+' se siente valorado! Ánimo +10%.');};
+window.wPraise=function(idx){const w=WORKERS[idx];const wd=workerData[idx];if(wd.praiseUsed)return;wd.praiseUsed=true;w.mood=Math.min(100,w.mood+10);updateWorkerMoods();addScore(20);notify('success','Reconocimiento','¡'+w.name+' se siente valorado! Ánimo +10%.');closeModal();};
 window.wHit=function(idx){
   const w=WORKERS[idx];
   if(!confirm('⚠ ¿Estás seguro? La agresión física tiene consecuencias graves para la empresa y el trabajador.'))return;
@@ -2773,39 +2846,74 @@ const SEB_CHEM_DATA={
 };
 
 let _sebTopicIdx=0;
+let _sebInvestigating=false, _sebInvestResult=null;
 function openSebastianRocha(forceKey){
   const topics=Object.keys(SEB_CHEM_DATA);
   const key=forceKey||(topics[_sebTopicIdx%topics.length]);
   if(!forceKey)_sebTopicIdx++;
   const topic=SEB_CHEM_DATA[key]||SEB_CHEM_DATA[topics[0]];
-  openModal('🧪 Sebastián Rocha · Jefe de Procesos Químicos','TechDent Chile — Zona de Formulación',`
-  <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:14px">
-    <div style="font-size:52px">👨‍🔬</div>
+  // Find the relevant machine for this topic
+  const machMap={mezclado:'mez',homogeneizacion:'hom',llenado:'lle',sellado:'sel'};
+  const machId=machMap[key];
+  const curMach=machId&&MACHINE_DATA[machId];
+  openModal('🧪 Sebastián Rocha · Jefe Procesos Químicos','TechDent Chile — Experto en Formulación',`
+  <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
+    <div style="font-size:44px">👨‍🔬</div>
     <div>
       <div style="color:#45d4ff;font-weight:700;font-size:13px">Sebastián Rocha</div>
-      <div style="font-size:10px;color:#5a7a8a">Jefe de Procesos Químicos · Ing. Química, U. Católica · 12 años en TechDent</div>
-      <div style="font-size:10px;color:#3a6070;margin-top:4px;font-style:italic">"Sin química no hay pasta de dientes. Con mala química tampoco."</div>
+      <div style="font-size:10px;color:#5a7a8a">12 años en TechDent · Ing. Química UC</div>
     </div>
   </div>
-  <div class="ibox gold" style="margin-bottom:10px"><strong>📋 ${topic.title}</strong></div>
-  <div class="two-col">
-    <div class="ibox" style="margin:0">
-      <div style="font-size:9px;color:#5a7a8a">TEMPERATURA</div>
-      <div style="font-size:18px;font-weight:900;color:#ff6600">${topic.temp}</div>
+  ${_sebInvestResult?`<div class="ibox green" style="margin-bottom:10px"><strong>🔬 Resultado Investigación:</strong> ${_sebInvestResult}<br><button class="btn-p" style="margin-top:6px;font-size:10px" onclick="applySebResult()">Implementar (+180 pts)</button></div>`:''}
+  ${_sebInvestigating?`<div class="ibox gold" style="margin-bottom:10px">🔬 <strong>Sebastián está investigando...</strong> Vuelve en unos momentos.</div>`:''}
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+    ${topics.map(k=>`<button onclick="closeModal();setTimeout(()=>openSebastianRocha('${k}'),80)" style="padding:5px 10px;background:${key===k?'rgba(69,212,255,.15)':'rgba(255,255,255,.04)'};border:1px solid ${key===k?'#45d4ff':'rgba(255,255,255,.1)'};border-radius:5px;color:${key===k?'#45d4ff':'#7a9aaa'};font-size:10px;cursor:pointer">${SEB_CHEM_DATA[k].title.split(' ')[0]}</button>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="ibox" style="margin:0;text-align:center">
+      <div style="font-size:9px;color:#5a7a8a">TEMPERATURA ÓPTIMA</div>
+      <div style="font-size:22px;font-weight:900;color:#ff6600">${topic.temp}</div>
     </div>
-    <div class="ibox" style="margin:0">
-      <div style="font-size:9px;color:#5a7a8a">TIEMPO DE PROCESO</div>
-      <div style="font-size:18px;font-weight:900;color:#45d4ff">${topic.time}</div>
+    <div class="ibox" style="margin:0;text-align:center">
+      <div style="font-size:9px;color:#5a7a8a">TIEMPO</div>
+      <div style="font-size:22px;font-weight:900;color:#45d4ff">${topic.time}</div>
     </div>
   </div>
-  <div class="ibox" style="margin-top:10px"><strong>⚠ Notas Técnicas:</strong><br><span style="font-size:10px;line-height:1.7">${topic.notes}</span></div>
-  <div class="ibox" style="margin-top:8px;background:rgba(71,212,255,.05);border-color:#45d4ff44"><strong>📊 Impacto en KPIs:</strong> ${topic.kpi}</div>
-  <div class="ibox" style="margin-top:8px;background:rgba(239,180,28,.05);border-color:#efb41c44"><strong>📚 Concepto ICI:</strong> <em style="font-size:10px">${topic.concept}</em></div>
-  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-    ${Object.keys(SEB_CHEM_DATA).map(k=>`<button class="btn-s" onclick="closeModal();setTimeout(()=>openSebastianRocha('${k}'),100)" style="font-size:9px;padding:5px 10px">🧪 ${SEB_CHEM_DATA[k].title}</button>`).join('')}
-  </div>
-  `,[{label:'Gracias Sebastián',fn:closeModal},{label:'📞 Reportar Problema',fn:()=>{closeModal();applyKPI({quality:-8,efficiency:-5});notify('bad','Problema Reportado',`${topic.title}: parámetros fuera de rango. Corrección urgente.`);}}]);
+  <div style="font-size:11px;color:#b0c8d0;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:6px;margin-bottom:8px">${topic.notes}</div>
+  <div style="font-size:10px;color:#efb41c;padding:6px 10px;background:rgba(239,180,28,.05);border-radius:5px">📊 ${topic.kpi}</div>
+  ${machId?`<button class="btn-p" style="margin-top:10px;width:100%" onclick="closeModal();setTimeout(()=>{const m=MACHINES.find(x=>x.id==='${machId}');if(m)openMachine(m);},80)">⚙ Ir a ${curMach?.name||'Máquina'} →</button>`:''}
+  <button class="btn-s" style="margin-top:8px;width:100%;border-color:#45d4ff44;color:#45d4ff" onclick="sebInvestigate()" ${_sebInvestigating?'disabled':''}>🔬 ${_sebInvestigating?'Investigando...':'Mandar a Investigar Mejora'}</button>
+  `,[{label:'Gracias',fn:closeModal}]);
 }
+
+window.sebInvestigate=function(){
+  if(_sebInvestigating) return;
+  _sebInvestigating=true; _sebInvestResult=null;
+  closeModal();
+  notify('info','🔬 Sebastián investiga','Sebastián fue al laboratorio. Regresa en 45 segundos con resultados.');
+  showStory('Sebastián Rocha · Laboratorio','"Voy a revisar las últimas muestras y los datos del proceso. Esto puede mejorar nuestra eficiencia o calidad notablemente."');
+  const results=[
+    {txt:'Detecté que la temperatura de sellado varía ±12°C en la tarde — la máquina necesita recalibración. Si la ajustas al rango exacto, los defectos de sello bajan un 15%.',kpi:{defectRate:-5,quality:8}},
+    {txt:'El tiempo de mezclado actual es 48 min cuando el óptimo es 42 min. Reducirlo aumenta throughput sin afectar calidad — ahorramos 14% de energía.',kpi:{efficiency:12,quality:4}},
+    {txt:'La boquilla #3 de la llenadora tiene desgaste asimétrico. Reemplazarla costaría $80k pero salvaría 200 tubos defectuosos por hora.',kpi:{defectRate:-8,quality:6}},
+    {txt:'El sílice abrasivo del lote actual tiene granulometría inconsistente. Recomiendo cambiar de proveedor o tamizar antes de mezclar.',kpi:{quality:10,defectRate:-4}},
+  ];
+  const r=results[Math.floor(Math.random()*results.length)];
+  setTimeout(()=>{
+    _sebInvestigating=false; _sebInvestResult=r.txt;
+    _sebPendingKPI=r.kpi;
+    notify('success','🔬 Sebastián volvió','¡Tiene resultados! Vuelve a hablar con él para implementar la mejora.');
+    showStory('Sebastián Rocha','"¡Jefe! Encontré algo importante. Ven a verlo."');
+  },45000);
+};
+let _sebPendingKPI=null;
+window.applySebResult=function(){
+  if(!_sebPendingKPI) return;
+  applyKPI(_sebPendingKPI);addScore(180);
+  _sebInvestResult=null; _sebPendingKPI=null;
+  notify('success','✓ Mejora implementada','Sebastián aplicó los cambios. ¡KPIs mejorados!');
+  closeModal();
+};
 
 // ═══════════════════════════════════════════════════════
 // ROOF ACCESS
@@ -3944,17 +4052,103 @@ function hitJuan(){
 }
 
 function confrontJuan(){
-  openModal('👔 Juan Seiffert','Gerente de Producción — CompetidorCorp Chile',`
-  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
-    <div style="font-size:52px">🦹</div>
-    <div><div style="color:#ff3300;font-weight:700;font-size:14px">Juan Seiffert</div>
-    <div style="font-size:10px;color:#5a7a8a">Gerente de Producción · CompetidorCorp Chile</div>
-    <div style="font-size:10px;color:#3a6070;margin-top:4px;font-style:italic">"La competencia no tiene límites cuando está en juego el mercado."</div></div>
+  // Final boss — options depend on strategy and game progress
+  const costScore=G.processUpgrades.size + (G.routeOptimized?1:0) + (G.providerNegotiated?1:0);
+  const diffScore=(G.strategy==='diff'?2:0) + G.inspections.length + G.hiredCandidates.size;
+  const moralOk=G.kpi.morale>70;
+  const kpiOk=G.kpi.quality>75&&G.kpi.defectRate<8;
+  openModal('🦹 CONFRONTACIÓN FINAL — Juan Seiffert','Gerente de CompetidorCorp · Amenaza Estratégica',`
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+    <div style="font-size:44px">🦹</div>
+    <div>
+      <div style="color:#ff3300;font-weight:700;font-size:14px">Juan Seiffert · CEO CompetidorCorp</div>
+      <div style="font-size:10px;color:#5a7a8a;font-style:italic">"TechDent va a desaparecer. Tengo más capital, más contactos y mejores máquinas."</div>
+    </div>
   </div>
-  <div class="ibox red" style="font-size:13px;line-height:1.8;margin-bottom:10px">"¿Crees que TechDent puede sobrevivir mi estrategia? He contratado agentes especializados para asegurarme de que tus KPIs caigan. ¡Mis saboteadores son más eficientes que toda tu planta!"</div>
-  <div class="ibox gold" style="font-size:11px"><strong>📊 Concepto ICI:</strong> Análisis del entorno competitivo (Porter) — las amenazas externas deben anticiparse. Un Jefe Industrial debe proteger los activos productivos de la empresa ante la competencia desleal.</div>
-  `,[{label:'¡Sal de mi planta!',cls:'btn-g',fn:()=>{closeModal();hideJuan();addScore(50);notify('success','Juan Seiffert expulsado','¡Lo enfrentaste! Se retiró... temporalmente.');}},{label:'Cerrar',fn:closeModal}]);
+  <div class="ibox red" style="margin-bottom:12px">"He infiltrado tu planta, saboteado tus KPIs y ahora vengo por tu mercado. ¿Qué vas a hacer, pequeño ingeniero?"</div>
+  <div style="font-size:11px;font-weight:700;color:#efb41c;margin-bottom:8px">Elige tu arma estratégica:</div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn-s" style="text-align:left;padding:12px;border-color:${G.strategy==='cost'&&costScore>=3?'#79df4b':'rgba(255,255,255,.1)'}" onclick="jsBattle('precio')">
+      💰 Bajar precio al mercado<br>
+      <span style="font-size:10px;color:#7a9aaa">Competir directo por precio. Mata a Juan... pero reduces margen. ${G.strategy==='cost'?'✓ Alineado con tu estrategia de costos.':''}</span>
+    </button>
+    <button class="btn-s" style="text-align:left;padding:12px;border-color:${G.strategy==='cost'&&costScore>=4?'#79df4b':'rgba(255,255,255,.1)'}" onclick="jsBattle('rentabilidad')">
+      📊 Mostrar rentabilidad superior<br>
+      <span style="font-size:10px;color:#7a9aaa">Si abarataste costos y mantuviste precios, tu rentabilidad es mejor. Ganas sin bajar precio. ${costScore>=4?'✓ Tienes suficientes optimizaciones.':''}</span>
+    </button>
+    <button class="btn-s" style="text-align:left;padding:12px;border-color:${G.strategy==='diff'&&diffScore>=4?'#79df4b':'rgba(255,255,255,.1)'}" onclick="jsBattle('calidad')">
+      🎯 Demostrar calidad superior ISO<br>
+      <span style="font-size:10px;color:#7a9aaa">Cruz Verde eligió TechDent por calidad. Con ISO 9001 y equipo capacitado, el mercado premium es tuyo. ${G.strategy==='diff'&&kpiOk?'✓ Tu calidad es superior.':''}</span>
+    </button>
+    <button class="btn-s" style="text-align:left;padding:12px;border-color:${moralOk?'#79df4b':'rgba(255,255,255,.1)'}" onclick="jsBattle('equipo')">
+      👥 El equipo es mi ventaja<br>
+      <span style="font-size:10px;color:#7a9aaa">Moral alta = equipo comprometido = innovación continua. El capital humano no se puede copiar. ${moralOk?'✓ Tu equipo está muy motivado.':''}</span>
+    </button>
+  </div>
+  <div class="ibox" style="margin-top:10px;font-size:10px">💡 Solo una respuesta es correcta según cómo jugaste. Si no coincide con tus decisiones, Juan ganará esta vez.</div>
+  `,[{label:'Huir',fn:()=>{closeModal();hideJuan();notify('warn','Huiste...','Juan se fue victorioso... por ahora.');}}]);
 }
+
+window.jsBattle=function(opcion){
+  const costScore=G.processUpgrades.size + (G.routeOptimized?1:0) + (G.providerNegotiated?1:0);
+  const diffScore=(G.strategy==='diff'?2:0) + G.inspections.length + G.hiredCandidates.size;
+  const moralOk=G.kpi.morale>70;
+  const kpiOk=G.kpi.quality>75&&G.kpi.defectRate<8;
+
+  let win=false,msg='',detail='';
+
+  if(opcion==='precio'&&G.strategy==='cost'&&costScore>=3){
+    win=true;
+    msg='💰 ¡Juan no puede igualar tus precios!';
+    detail='Tu estrategia de costos redujo el costo unitario lo suficiente para competir directamente. CompetidorCorp no puede operar con esos márgenes. Juan se retira del segmento.';
+    applyKPI({efficiency:10,quality:-5});
+  } else if(opcion==='rentabilidad'&&G.strategy==='cost'&&costScore>=4){
+    win=true;
+    msg='📊 ¡TechDent tiene mejor EBITDA!';
+    detail='Abarataste costos Y mantuviste precios. Tu rentabilidad supera a CompetidorCorp. Los inversores abandonan a Juan y se van con TechDent.';
+    applyKPI({efficiency:8,quality:5});
+    G.budget+=500000; updateBudgetHUD();
+  } else if(opcion==='calidad'&&G.strategy==='diff'&&kpiOk){
+    win=true;
+    msg='🎯 ¡Calidad ISO 9001 imparable!';
+    detail='Cruz Verde y Salco Bond firmaron contratos exclusivos con TechDent gracias a tu certificación ISO 9001. Juan no puede competir en el segmento premium.';
+    applyKPI({quality:12,morale:10});
+    G.budget+=400000; updateBudgetHUD();
+  } else if(opcion==='equipo'&&moralOk){
+    win=true;
+    msg='👥 ¡El equipo es tu activo más valioso!';
+    detail='Tus trabajadores capacitados e innovadores lanzaron FrescoMax® Whitening antes que CompetidorCorp. La moral alta = velocidad de innovación. Juan queda atrás.';
+    applyKPI({morale:15,quality:8});
+  } else {
+    win=false;
+    const hints={precio:'Necesitas más optimizaciones de costo primero.',rentabilidad:'Optimiza más procesos antes de usar esta estrategia.',calidad:'Necesitas estrategia Diferenciación + calidad >75%.',equipo:'Sube la moral del equipo sobre 70% primero.'};
+    msg='❌ Juan contraataca...';
+    detail=`Tu estrategia no fue suficiente. ${hints[opcion]||'Vuelve, mejora tus KPIs y vuelve a enfrentarlo.'} Juan se retira temporalmente.`;
+    applyKPI({efficiency:-8,morale:-10});
+    addScore(-100);
+  }
+
+  closeModal();
+  if(win){
+    hideJuan(); addScore(500);
+    // Trigger final result with updated benchmark
+    setTimeout(()=>{
+      openModal('🏆 '+msg,'¡Victoria Estratégica — TechDent Chile!',`
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:56px;margin-bottom:10px">🏆</div>
+        <div class="ibox green" style="font-size:13px;line-height:1.8">${detail}</div>
+        <div class="ibox gold" style="margin-top:10px"><strong>+500 puntos · Juan Seiffert eliminado del mercado</strong></div>
+        <div class="ibox" style="margin-top:10px;font-size:11px"><strong>📊 Concepto ICI:</strong> La ventaja competitiva sostenible (Porter) proviene de estrategias coherentes entre todas las áreas de la empresa. Tú demostraste eso.</div>
+      </div>
+      `,[{label:'Ver Benchmark Final',cls:'btn-g',fn:()=>{closeModal();showFinalResult();}}]);
+    },800);
+  } else {
+    showStory('Juan Seiffert','"Te dije que no eras suficiente. Vuelve cuando tengas una estrategia real."');
+    notify('bad','Juan ganó esta ronda','Mejora tus KPIs y vuelve a confrontarlo.');
+    // Juan reappears later
+    setTimeout(()=>showJuan(),60000);
+  }
+};
 
 // ═══════════════════════════════════════════════════════
 // BUDGET — OPERATING COSTS & ALERTS
