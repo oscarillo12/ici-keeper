@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -374,6 +374,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
     <div class="wms-tabs">
       <div class="wms-tab active" onclick="wmsTab('dash')">Dashboard</div>
       <div class="wms-tab" onclick="wmsTab('inv')">Inventario</div>
+      <div class="wms-tab" onclick="wmsTab('radar')">Radar</div>
       <div class="wms-tab" onclick="wmsTab('ord')">Órdenes</div>
       <div class="wms-tab" onclick="wmsTab('rut')">Rutas</div>
       <div class="wms-tab" onclick="wmsTab('kpi')">KPIs</div>
@@ -418,6 +419,9 @@ const G = {
   strategy: null,      // 'diff' | 'cost'
   score: 0,
   t: 0,
+  plantOrder: 100,    // 5S Order: 100 = Perfect, 0 = Chaos
+
+  kpi: { quality:65, efficiency:72, morale:58, defectRate:14 },
 
   kpi: { quality:65, efficiency:72, morale:58, defectRate:14 },
 
@@ -1209,6 +1213,8 @@ buildNPC(-37,14,0x8866dd,'Candidatos','candidates');
 buildNPC(43,5,0xefb41c,'Laboratorio Calidad','quality');
 // Logistics
 buildNPC(5,-30,0x79df4b,'Terminal WMS','logistics');
+const sellBtn=new THREE.Mesh(new THREE.BoxGeometry(.5,.2,.5),new THREE.MeshStandardMaterial({color:0x79df4b}));
+sellBtn.position.set(5,0.1,-38);scene.add(sellBtn);
 
 // ═══════════════════════════════════════════════════════
 // INTERACTABLES REGISTRY
@@ -1220,6 +1226,7 @@ const IOBJ = [
   {id:'candidates',  pos:new THREE.Vector3(-37,0,14),  range:5,   hint:'[E] Ver Candidatos Disponibles'},
   {id:'quality',     pos:new THREE.Vector3(43,0,5),    range:5,   hint:'[E] Abrir Gestión de Calidad'},
   {id:'logistics',   pos:new THREE.Vector3(5,0,-30),   range:5.5, hint:'[E] Conectarse al WMS / ERP'},
+  {id:'sell_lot_btn',   pos:new THREE.Vector3(5,0,-38),   range:4.5, hint:'[E] Vender Lote de Productos'},
   // Machines
   ...MACHINES.map(m=>({id:'m_'+m.id, pos:new THREE.Vector3(m.x,0,m.z), range:4.5, hint:m.hint, machine:m}))
 ];
@@ -1369,6 +1376,7 @@ function doInteract(){
   else if(id==='miguel_ghost') openMiguelDialog();
   else if(id==='sebastian_rocha') openSebastianRocha();
   else if(id==='juan_seiffert') confrontJuan();
+  else if(id==='sell_lot_btn') openSellModal();
 }
 
 function updateInspCounter(){
@@ -1615,7 +1623,11 @@ let _machTab=0, _machCurrent=null;
 function openMachine(m){
   _machCurrent=m; _machTab=0; renderMachTab();
   G.machinesInteracted.add(m.id);
-  if(G.machinesInteracted.size>=3){G.zonesComplete.add('pro');updateZoneSidebar();}
+  if(G.machinesInteracted.size>=3){
+    G.zonesComplete.add('pro');updateZoneSidebar();
+    // Disparar siguiente misión si hay una esperando trigger de proceso
+    if(!G.activeMission) checkMissionTrigger('pro_interact');
+  }
 }
 function renderMachTab(){
   const m=_machCurrent; if(!m) return;
@@ -1662,8 +1674,15 @@ window.applyMachineParams=function(mid){
   applyKPI({quality:Math.round(Math.random()*6+3), efficiency:Math.round(Math.random()*5+3)});
   addScore(80);
   triggerMachineGlow(mid,0x00e5cc);
-  notify('success','Parámetros Aplicados','⚙ La máquina está respondiendo — ve los cambios en el HUD.');
+  notify('success','Parámetros Aplicados','⚙ La máquina responde — ve los cambios en el HUD.');
   closeModal();
+  // Esta acción puede completar misiones tipo speedDial
+  if(G._speedDialMission){
+    const sm=G._speedDialMission; G._speedDialMission=null;
+    setTimeout(()=>finishMission(sm),800);
+  }
+  // Avanzar historia si no hay misión activa
+  if(!G.activeMission) setTimeout(()=>checkMissionTrigger('pro_interact'),500);
 };
 
 window.applyUpgrade=function(mid){
@@ -1987,13 +2006,35 @@ function renderQualityTab(){
 }
 window.renderQualityTab=renderQualityTab;
 
+// delegateTask — delegar tareas al equipo (con costo y penalización menor)
+window.delegateTask=function(tipo){
+  const costos={inspeccion:80000,negociar:120000,auditoria:100000};
+  const costo=costos[tipo]||80000;
+  if(G.budget<costo){notify('bad','Sin presupuesto','Necesitas $'+costo.toLocaleString()+' para delegar. Vende stock primero.');return;}
+  G.budget-=costo; updateBudgetHUD();
+  closeModal();
+  const msgs={
+    inspeccion:'Diego Torres colocó inspecciones en 2 máquinas clave. Calidad mejora levemente pero sin tu análisis de cuáles eran las críticas.',
+    negociar:'Ana Muñoz negoció con el proveedor. Defectos de origen bajan, pero el acuerdo fue menos favorable que si lo hacías tú.',
+    auditoria:'Carlos hizo la auditoría. Encontró 2 de las 4 no conformidades. Resultado parcial.',
+  };
+  setTimeout(()=>{
+    if(tipo==='inspeccion'){applyKPI({defectRate:-2,quality:3});addScore(40);}
+    else if(tipo==='negociar'){applyKPI({defectRate:-2,quality:3});G.providerNegotiated=true;addScore(50);}
+    else if(tipo==='auditoria'){applyKPI({quality:4,efficiency:-2});G.auditDone=true;addScore(60);}
+    notify('success','Tarea delegada',msgs[tipo]||'Tarea completada por el equipo.');
+    showStory('👻 Miguel González','\"Delegar está bien, pero un buen Jefe Industrial conoce cada proceso. La próxima hazlo tú mismo y aprende la diferencia.\"');
+    if(G._qualMissionPending){const qM=G._qualMissionPending;G._qualMissionPending=null;setTimeout(()=>finishMission(qM),1000);}
+  },2000);
+};
+
 window.doNegotiate=function(){
+  if(G.providerNegotiated) return;
   G.providerNegotiated=true;
   applyKPI({defectRate:-4,quality:5});
   addScore(120);
   notify('success','Proveedores Negociados','Los proveedores de MP ahora tienen certificación de calidad. Defectos de origen reducidos -4%.');
-  closeModal(); setTimeout(openQuality,200);
-  // Auto-complete quality mission if pending
+  closeModal(); setTimeout(()=>setQualTab(0),200);
   if(G._qualMissionPending){const qM=G._qualMissionPending;G._qualMissionPending=null;setTimeout(()=>finishMission(qM),1500);}
 };
 
@@ -2002,8 +2043,8 @@ window.doAudit=function(){
   G.auditDone=true;
   applyKPI({quality:8,efficiency:-3});
   addScore(150);
-  notify('info','Auditoría Interna','Auditoría completada. Se encontraron 3 no conformidades menores, todas documentadas con planes de acción.');
-  closeModal(); setTimeout(openQuality,200);
+  notify('info','Auditoría Interna','Auditoría completada. Se encontraron 3 no conformidades menores, todas documentadas.');
+  closeModal(); setTimeout(()=>setQualTab(2),200);
 };
 
 // ═══════════════════════════════════════════════════════
@@ -2051,15 +2092,38 @@ window.closeWMS=function(){
 };
 window.wmsTab=function(tab){
   document.querySelectorAll('.wms-tab').forEach((t,i)=>{
-    t.classList.toggle('active',['dash','inv','ord','rut','kpi'][i]===tab);
+    t.classList.toggle('active',['dash','inv','radar','ord','rut','kpi'][i]===tab);
   });
   const c=document.getElementById('wms-content');
   if(tab==='dash') c.innerHTML=wmsRenderDash();
   else if(tab==='inv') c.innerHTML=wmsRenderInv();
+  else if(tab==='radar') c.innerHTML=wmsRenderRadar();
   else if(tab==='ord') c.innerHTML=wmsRenderOrd();
   else if(tab==='rut') c.innerHTML=wmsRenderRut();
   else if(tab==='kpi') c.innerHTML=wmsRenderKpi();
 };
+
+function wmsRenderRadar(){
+  const stock=PROD.warehouse;
+  const sectors=['S-1 (Atenuación)','S-2 (Sombra)','S-3 (Frío)','S-4 (Térmico)','S-5 (Seco)'];
+  return `
+  <div style="display:flex;flex-direction:column;align-items:center;gap:15px">
+    <div style="position:relative;width:250px;height:250px;border:2px solid rgba(255,255,255,.1);border-radius:50%;background:radial-gradient(circle,rgba(0,229,204,.05) 0%,transparent 70%)">
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;color:#00e5cc">📦 STOCK: ${stock.toLocaleString()}</div>
+      ${sectors.map((s,i)=>{
+        const angle=(i/sectors.length)*Math.PI*2;
+        const x=100+Math.cos(angle)*80;
+        const y=100+Math.sin(angle)*80;
+        const fill=Math.min(100, (stock/5000)*20);
+        return `<div style="position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%);text-align:center">
+          <div style="width:12px;height:12px;background:#79df4b;border-radius:50%;box-shadow:0 0 8px #79df4b"></div>
+          <div style="font-size:8px;color:#5a7a8a;white-space:nowrap">${s}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="ibox" style="font-size:10px;text-align:center">Visualización de flujo de materiales en tiempo real. <br>Sectores optimizados según FIFO (First-In First-Out).</div>
+  </div>`;
+}
 
 function wmsRenderDash(){
   const rate=Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1));
@@ -3111,7 +3175,7 @@ function openSebastianRocha(forceKey){
   if(!forceKey)_sebTopicIdx++;
   const topic=SEB_CHEM_DATA[key]||SEB_CHEM_DATA[topics[0]];
   // Find the relevant machine for this topic
-  const machId=m.id; // keys ahora coinciden con IDs de máquinas
+  const machId=key; // keys ahora coinciden con IDs de máquinas
   const curMach=machId&&MACHINE_DATA[machId];
   openModal('🧪 Sebastián Rocha · Jefe Procesos Químicos','TechDent Chile — Experto en Formulación',`
   <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
@@ -3225,101 +3289,115 @@ const ALL_MISSIONS={
     {id:'d1',trigger:'strategy',
      title:'🧪 MISIÓN 1 — Nueva Fórmula Blanqueadora',
      from:'Ana Muñoz · Ing. Industrial',
-     story:'Marketing llama: Cruz Verde quiere FrescoMax Premium en 5 días. Necesitas añadir peróxido de carbamida 3% al TANQUE MEZCLADOR. Ve al centro de la línea de producción y hazlo manualmente.\n\n👉 SIGUIENTE PASO: Ve al Tanque Mezclador (línea de producción, centro-izquierda) → presiona [E].',
-     waypoint:'mez',
-     type:'mixing',reward:{quality:12,morale:8,score:180}},
+     story:'Marketing llama: Cruz Verde quiere FrescoMax Premium en 5 días. Añade peróxido de carbamida 3% al TANQUE MEZCLADOR.\n\n👉 Ve al Tanque Mezclador (línea de producción, centro-izquierda) → [E]',
+     waypoint:'mez',type:'mixing',reward:{quality:12,morale:8,score:180}},
     {id:'d2',trigger:'d1',
-     title:'🔬 MISIÓN 2 — Muestreo del Lote Premium',
+     title:'🔬 MISIÓN 2 — Inspeccionar Lote Premium',
      from:'Diego Torres · Calidad',
-     story:'¡Excelente mezcla! Ahora ve al LABORATORIO DE CALIDAD (zona amarilla, lado derecho de la planta) e inspecciona 5 tubos manualmente. El cliente Cruz Verde revisará todo.\n\n👉 SIGUIENTE PASO: Ve a Calidad (zona este, zona amarilla) → [E].',
-     waypoint:'quality',
-     type:'sampling',params:{required:4,total:5},reward:{quality:10,defectRate:-3,score:150}},
+     story:'Lote mezclado. Ahora inspecciona tubos en el LABORATORIO DE CALIDAD para que Cruz Verde apruebe.\n\n👉 Ve a Calidad (zona este, amarilla) → [E]',
+     waypoint:'quality',type:'sampling',params:{required:4,total:5},reward:{quality:10,defectRate:-3,score:150}},
     {id:'d3',trigger:'d2',
-     title:'⚙ MISIÓN 3 — Calibrar Velocidad Premium',
-     from:'Miguel González · Director',
-     story:'Para calidad premium necesitamos operar al 65% de velocidad. Ve al TANQUE MEZCLADOR y ajusta los parámetros desde el panel.\n\n👉 SIGUIENTE PASO: Regresa al Tanque Mezclador en la línea de producción → [E].',
-     waypoint:'mez',
-     type:'speedDial',params:{target:.65,tol:.08},reward:{quality:8,efficiency:-5,score:120}},
-    {id:'d_per',trigger:'d3',
-     title:'👥 MISIÓN 4 — Contratar Equipo de Calidad',
+     title:'⚙ MISIÓN 3 — Calibrar Línea para Premium',
+     from:'Sebastián Rocha · Procesos',
+     story:'Para calidad premium ajusta el Homogeneizador a 210 bar y la Llenadora a 75ml exactos. Habla con Sebastián y calibra las máquinas.\n\n👉 Ve al Homogeneizador o Llenadora → [E] → aplica parámetros',
+     waypoint:'hom',type:'speedDial',params:{target:.85,tol:.15},reward:{quality:8,efficiency:5,score:120}},
+    {id:'d_5s',trigger:'d3',
+     title:'📐 MISIÓN 4 — Metodología 5S en la Línea',
+     from:'Miguel González · Fantasma Fundador',
+     story:'¡El fantasma de Don Miguel apareció! Dice que la planta está desordenada. Aplica 5S: visita 3 máquinas diferentes y ajusta sus parámetros para ordenar y optimizar.\n\n👉 Ve a cualquier máquina de la línea → [E] → aplica parámetros (necesitas 3)',
+     waypoint:'alm',type:'fiveS',reward:{quality:6,efficiency:8,morale:8,score:130}},
+    {id:'d_per',trigger:'d_5s',
+     title:'👥 MISIÓN 5 — Contratar Equipo ISO',
      from:'Valentina Ramos · RRHH',
-     story:'Para lanzar FrescoMax Premium necesitamos personal capacitado en ISO 9001. Ve a RECURSOS HUMANOS (zona morada, lado izquierdo) y contrata al menos 1 candidato con experiencia ISO.\n\n👉 SIGUIENTE PASO: Ve a la zona RRHH (oeste, zona morada) → habla con Valentina → contrata candidatos.',
-     waypoint:'valentina',
-     type:'hrHire',reward:{morale:10,quality:5,score:130}},
+     story:'Para certificar FrescoMax® Premium necesitamos personal ISO. Ve a RRHH (zona morada, oeste) y contrata al menos 1 candidato.\n\n👉 Ve a RRHH (zona oeste) → [E] con Valentina → contrata',
+     waypoint:'valentina',type:'hrHire',reward:{morale:10,quality:5,score:130}},
     {id:'d_iso',trigger:'d_per',
-     title:'📚 MISIÓN 5 — Capacitación ISO 9001',
-     from:'Carlos Mendoza · Capacitador ISO',
-     story:'Valentina contrató al equipo. Ahora hay que capacitarlos en ISO 9001:2015. Carlos Mendoza está esperándote en la zona RRHH para el entrenamiento.\n\n👉 SIGUIENTE PASO: Habla con CARLOS en RRHH (zona oeste) → completa los 4 módulos de capacitación.',
-     waypoint:'trainer',
-     type:'isoTraining',reward:{quality:8,morale:12,score:150}},
+     title:'📚 MISIÓN 6 — Capacitación ISO 9001',
+     from:'Carlos Mendoza · Capacitador',
+     story:'El equipo nuevo necesita formación. Carlos Mendoza te espera en RRHH.\n\n👉 Ve a RRHH (zona oeste) → [E] con Carlos → completa los 4 módulos',
+     waypoint:'trainer',type:'isoTraining',reward:{quality:8,morale:12,score:150}},
     {id:'d_cal',trigger:'d_iso',
-     title:'🔍 MISIÓN 6 — Implementar Control de Calidad',
+     title:'🔍 MISIÓN 7 — Implementar Inspecciones',
      from:'Diego Torres · Calidad',
-     story:'¡Excelente! El equipo está capacitado. Ahora ve al LABORATORIO DE CALIDAD (este, zona amarilla) y coloca puntos de inspección en la línea. Presiona [Q] para activar modo inspección.\n\n👉 SIGUIENTE PASO: Ve a Calidad (zona este) → [E] → usa [Q] para colocar inspecciones.',
-     waypoint:'quality',
-     type:'qualityInspect',reward:{quality:12,defectRate:-5,score:160}},
-    {id:'d_log',trigger:'d_cal',
-     title:'📦 MISIÓN 7 — Optimizar Logística de Distribución',
+     story:'¡Equipo certificado! Coloca al menos 1 punto de control en la línea para detección temprana de defectos.\n\n👉 Presiona [Q] → acércate a una máquina → [E] para colocar inspección',
+     waypoint:'quality',type:'qualityInspect',reward:{quality:12,defectRate:-5,score:160}},
+    {id:'d_sell',trigger:'d_cal',
+     title:'💰 MISIÓN 8 — Producir y Vender Primer Lote',
+     from:'Pedro Soto · Ventas',
+     story:'Cruz Verde está esperando. Acumula al menos 200 unidades en bodega y véndelas. Ve a Logística y usa el botón VENDER del HUD verde.\n\n👉 Ve a Logística (zona sur) → vende desde el HUD bodega',
+     waypoint:'logistics',type:'sellStock',params:{minQty:200},reward:{efficiency:5,score:140}},
+    {id:'d_car',trigger:'d_sell',
+     title:'🚗 MISIÓN 9 — Entrega Urgente a Cruz Verde',
+     from:'Carlos Castro · Despacho',
+     story:'¡Cruz Verde llama! Necesita el pedido YA. Sube al camión de reparto y lleva los productos a la ciudad.\n\n👉 Inicio: Terminal de Carga (sur, verde) → [E]',
+     waypoint:'logistics',type:'deliveryGame',reward:{efficiency:12,score:180}},
+    {id:'d_log',trigger:'d_car',
+     title:'📦 MISIÓN 10 — Optimizar Ruta de Despacho',
      from:'Carlos Castro · Bodeguero',
-     story:'Cruz Verde está esperando el pedido premium. Ve al TERMINAL WMS (zona sur, verde) y optimiza la ruta de despacho para llegar a tiempo.\n\n👉 SIGUIENTE PASO: Ve a Logística (zona sur, verde) → [E] → abre WMS → optimiza ruta.',
-     waypoint:'logistics',
-     type:'wmsOptimize',reward:{efficiency:10,score:140}},
+     story:'¡Bien! Ahora optimiza la ruta para los próximos despachos y reducir km y costo.\n\n👉 Ve a Logística → [E] → WMS → tab Rutas → Optimizar',
+     waypoint:'logistics',type:'wmsOptimize',reward:{efficiency:10,score:140}},
     {id:'d4',trigger:'d_log',
-     title:'🎉 MISIÓN 8 — Lanzamiento FrescoMax® Premium',
+     title:'🎉 MISIÓN 11 — Lanzamiento FrescoMax® Premium',
      from:'Valentina Ramos · RRHH',
-     story:'¡Cruz Verde aceptó 10.000 unidades! Todo el equipo lo logró junto. Esta noche celebramos el lanzamiento oficial de FrescoMax® Premium. ¿Te unes?\n\n👉 ÚLTIMA MISIÓN: Habla con Valentina en RRHH para el evento de lanzamiento.',
-     waypoint:'valentina',
-     type:'social',params:{occasion:'lanzamiento'},reward:{morale:22,score:250}},
+     story:'¡Cruz Verde aceptó 10.000 unidades! Celebramos el lanzamiento esta noche.\n\n👉 Habla con Valentina en RRHH para el evento',
+     waypoint:'valentina',type:'social',params:{occasion:'lanzamiento'},reward:{morale:22,score:250}},
   ],
   cost:[
     {id:'c1',trigger:'strategy',
      title:'🚀 MISIÓN 1 — Pedido Urgente Walmart Chile',
      from:'Pedro Soto · Ventas',
-     story:'¡Walmart Chile necesita 40% más unidades para el viernes! Sube la velocidad de la línea al 160% desde el panel de control. Ve al HOMOGENEIZADOR en la línea de producción.\n\n👉 SIGUIENTE PASO: Ve al Homogeneizador (línea de producción, centro) → [E] → ajusta parámetros.',
-     waypoint:'hom',
-     type:'speedDial',params:{target:1.6,tol:.15},reward:{efficiency:18,defectRate:4,score:160}},
-    {id:'c2',trigger:'c1',
-     title:'⚠ MISIÓN 2 — ¡Alarma Crítica en Llenadora!',
+     story:'¡Walmart necesita 40% más unidades! Sube velocidad de línea. Ve al HOMOGENEIZADOR y ajusta los parámetros.\n\n👉 Ve al Homogeneizador (línea central) → [E] → aplica parámetros',
+     waypoint:'hom',type:'speedDial',params:{target:1.6,tol:.15},reward:{efficiency:18,defectRate:4,score:160}},
+    {id:'c_5s',trigger:'c1',
+     title:'📐 MISIÓN 2 — 5S: Ordenar la Línea',
+     from:'Miguel González · Fantasma Fundador',
+     story:'¡El fantasma de Don Miguel apareció en la planta! "La velocidad sin orden es caos". Visita 3 máquinas y aplica parámetros para ordenar y optimizar el flujo.\n\n👉 Visita 3 máquinas diferentes → [E] → aplica parámetros en cada una',
+     waypoint:'alm',type:'fiveS',reward:{efficiency:10,quality:5,morale:5,score:130}},
+    {id:'c2',trigger:'c_5s',
+     title:'⚠ MISIÓN 3 — ¡Alarma Crítica en Llenadora!',
      from:'Sistema SCADA · Planta',
-     story:'¡ALERTA ROJA! Los tubos tienen 15% bajo peso. La línea debe detenerse AHORA. Corre al BOTÓN ROJO en la pared oeste y detén la línea para evitar más defectos.\n\n👉 SIGUIENTE PASO: Corre al botón de parada de emergencia (pared oeste, indicado en minimap).',
-     waypoint:'estop_btn',
-     type:'emergencyStop',params:{time:20},reward:{defectRate:-7,score:200}},
+     story:'¡ALERTA ROJA! Tubos con 15% bajo peso. Corre al BOTÓN ROJO en la pared oeste.\n\n👉 Corre al botón de parada de emergencia (pared oeste)',
+     waypoint:'estop_btn',type:'emergencyStop',params:{time:20},reward:{defectRate:-7,score:200}},
     {id:'c_per',trigger:'c2',
-     title:'👥 MISIÓN 3 — Reforzar Equipo de Producción',
+     title:'👥 MISIÓN 4 — Reforzar Equipo',
      from:'Valentina Ramos · RRHH',
-     story:'Para manejar el volumen de Walmart necesitamos más personal. Ve a RECURSOS HUMANOS (zona morada, oeste) y contrata trabajadores con experiencia en procesos de alta velocidad.\n\n👉 SIGUIENTE PASO: Ve a zona RRHH (oeste) → habla con Valentina → contrata candidatos.',
-     waypoint:'valentina',
-     type:'hrHire',reward:{morale:10,efficiency:5,score:130}},
+     story:'Para manejar el volumen necesitamos más personal. Ve a RRHH (zona morada, oeste).\n\n👉 Ve a RRHH → habla con Valentina → contrata candidatos',
+     waypoint:'valentina',type:'hrHire',reward:{morale:10,efficiency:5,score:130}},
     {id:'c_iso',trigger:'c_per',
-     title:'📚 MISIÓN 4 — Capacitación del Equipo',
-     from:'Carlos Mendoza · Capacitador ISO',
-     story:'El equipo nuevo necesita capacitación ISO 9001. Carlos Mendoza está esperándote en RRHH para el entrenamiento.\n\n👉 SIGUIENTE PASO: Habla con CARLOS en RRHH (zona oeste) → completa los módulos.',
-     waypoint:'trainer',
-     type:'isoTraining',reward:{quality:8,morale:12,score:150}},
+     title:'📚 MISIÓN 5 — Capacitación del Equipo',
+     from:'Carlos Mendoza · Capacitador',
+     story:'El equipo nuevo necesita capacitación ISO. Carlos te espera en RRHH.\n\n👉 Habla con Carlos en RRHH → completa los módulos',
+     waypoint:'trainer',type:'isoTraining',reward:{quality:8,morale:12,score:150}},
     {id:'c3',trigger:'c_iso',
-     title:'🚜 MISIÓN 5 — Reordenar Almacén',
+     title:'🚜 MISIÓN 6 — Reordenar Almacén',
      from:'Carlos Castro · Bodeguero',
-     story:'Las materias primas llegaron en pallets desordenados y bloquean la línea. Ve a la ZONA LOGÍSTICA (sur, verde) y sube al montacargas para mover los 3 pallets.\n\n👉 SIGUIENTE PASO: Ve a Logística (zona sur) → sube al montacargas → mueve los pallets.',
-     waypoint:'fk_enter',
-     type:'forklift',params:{pallets:3},reward:{efficiency:15,score:180}},
-    {id:'c4',trigger:'c3',
-     title:'📦 MISIÓN 6 — Revisión Pre-Despacho',
+     story:'Los pallets llegaron desordenados. Sube al montacargas en Logística y mueve los pallets.\n\n👉 Ve a Logística (sur) → sube al montacargas → mueve 3 pallets',
+     waypoint:'fk_enter',type:'forklift',params:{pallets:3},reward:{efficiency:15,score:180}},
+    {id:'c_sell',trigger:'c3',
+     title:'💰 MISIÓN 7 — Vender Primer Lote Masivo',
+     from:'Pedro Soto · Ventas',
+     story:'Tenemos stock. Acumula al menos 300 unidades y véndelas a Walmart para generar caja.\n\n👉 Usa el botón verde "VENDER" del HUD abajo-derecha',
+     waypoint:'logistics',type:'sellStock',params:{minQty:300},reward:{efficiency:5,score:140}},
+    {id:'c4',trigger:'c_sell',
+     title:'📦 MISIÓN 8 — Revisión Pre-Despacho',
      from:'Diego Torres · Calidad',
-     story:'Antes de despachar a Walmart: ve al LABORATORIO DE CALIDAD y verifica 5 tubos manualmente para asegurarte que todo cumple las especificaciones.\n\n👉 SIGUIENTE PASO: Ve a Calidad (zona este, amarilla) → [E] → inspecciona tubos.',
-     waypoint:'quality',
-     type:'sampling',params:{required:3,total:5},reward:{quality:6,score:120}},
-    {id:'c_log',trigger:'c4',
-     title:'📦 MISIÓN 7 — Optimizar Ruta de Despacho',
+     story:'Antes de despachar a Walmart: ve a Calidad e inspecciona 3 tubos manualmente.\n\n👉 Ve a Calidad (zona este, amarilla) → [E]',
+     waypoint:'quality',type:'sampling',params:{required:3,total:5},reward:{quality:6,score:120}},
+    {id:'c_car',trigger:'c4',
+     title:'🚗 MISIÓN 9 — Entrega Express a Walmart',
+     from:'Carlos Castro · Despacho',
+     story:'¡Walmart necesita el pedido urgente! Sube al camión de reparto y lleva los productos a la ciudad.\n\n👉 Inicio: Terminal de Carga (sur, verde) → [E]',
+     waypoint:'logistics',type:'deliveryGame',reward:{efficiency:10,score:160}},
+    {id:'c_log',trigger:'c_car',
+     title:'📦 MISIÓN 10 — Optimizar Ruta',
      from:'Carlos Castro · Bodeguero',
-     story:'Tenemos los productos listos. Ve al TERMINAL WMS (sur, zona verde) y optimiza la ruta de los camiones de despacho para llegar antes de la hora límite.\n\n👉 SIGUIENTE PASO: Ve a Logística (zona sur) → [E] → WMS → tab Rutas → Optimizar.',
-     waypoint:'logistics',
-     type:'wmsOptimize',reward:{efficiency:8,score:140}},
+     story:'Optimiza la ruta de despacho para reducir km.\n\n👉 Ve a Logística → [E] → WMS → Rutas → Optimizar',
+     waypoint:'logistics',type:'wmsOptimize',reward:{efficiency:8,score:140}},
     {id:'c5',trigger:'c_log',
-     title:'🍻 MISIÓN 8 — ¡Happy Hour del Equipo!',
+     title:'🍻 MISIÓN 11 — ¡Happy Hour del Equipo!',
      from:'Marco Fuentes · Operario',
-     story:'¡Despachamos a Walmart a tiempo y bajo costo! El equipo entero lo celebra en el bar. ¡Bien merecido!\n\n👉 ÚLTIMA MISIÓN: Habla con Valentina en RRHH para ir al evento.',
-     waypoint:'valentina',
-     type:'social',params:{occasion:'happy_hour'},reward:{morale:25,score:220}},
+     story:'¡Despachamos a Walmart a tiempo y bajo costo!\n\n👉 Habla con Valentina en RRHH para celebrar',
+     waypoint:'valentina',type:'social',params:{occasion:'happy_hour'},reward:{morale:25,score:220}},
   ],
 };
 
@@ -3418,11 +3496,14 @@ function launchTask(m){
   else if(m.type==='speedDial') openSpeedDialGame(m);
   else if(m.type==='emergencyStop') startEStop(m);
   else if(m.type==='forklift') startForkliftMission(m);
+  else if(m.type==='deliveryGame') launchDeliveryGame(m);
   else if(m.type==='social') openSocialGame(m);
   else if(m.type==='hrHire') launchHRHire(m);
   else if(m.type==='isoTraining') launchISOTraining(m);
   else if(m.type==='qualityInspect') launchQualityInspect(m);
   else if(m.type==='wmsOptimize') launchWMSOptimize(m);
+  else if(m.type==='fiveS') launchFiveS(m);
+  else if(m.type==='sellStock') launchSellStock(m);
 }
 
 // Launchers for new mission types that redirect to existing systems
@@ -3447,6 +3528,52 @@ function launchWMSOptimize(m){
   setWaypoint('logistics');
   G._wmsMissionPending=m;
 }
+
+// ── 5S: visitar 3 máquinas y aplicar parámetros ──────────
+function launchFiveS(m){
+  G._fiveSMission=m;
+  G._fiveSCount=0;
+  setWaypoint('alm');
+  notify('info','🏭 Misión 5S — Ordenar la Línea','¡El fantasma de Don Miguel pide orden! Visita 3 máquinas de la línea → [E] → aplica parámetros en cada una.');
+  showStory('👻 Miguel González · Fundador','"La metodología 5S: Clasificar, Ordenar, Limpiar, Estandarizar, Sostener. Sin orden no hay calidad. Visita 3 máquinas y optimiza sus parámetros."');
+  // Hacer aparecer a Miguel cerca del jugador
+  if(miguelGhost){
+    miguelGhost.visible=true;
+    miguelGhost.position.set(camera.position.x-Math.sin(yaw)*4,0,camera.position.z-Math.cos(yaw)*4);
+    setTimeout(()=>{if(miguelGhost)miguelGhost.visible=false;},12000);
+  }
+}
+
+// ── Vender stock: esperar que bodega tenga minQty ────────
+function launchSellStock(m){
+  G._sellMission=m;
+  const minQty=m.params?.minQty||100;
+  setWaypoint('logistics');
+  notify('info','💰 Misión Venta','Acumula '+(minQty)+' unidades en bodega y véndelas usando el botón verde 💰 abajo a la derecha.');
+  // Revisar periódicamente si ya se vendió suficiente
+  G._sellCheck=setInterval(()=>{
+    if(!G._sellMission) return clearInterval(G._sellCheck);
+    if(PROD.totalSold>=minQty){
+      clearInterval(G._sellCheck);
+      const sm=G._sellMission; G._sellMission=null;
+      finishMission(sm);
+    }
+  },3000);
+}
+
+// Hookear applyMachineParams para contar progreso 5S
+const _origApplyMachParams=window.applyMachineParams;
+window.applyMachineParams=function(mid){
+  _origApplyMachParams(mid);
+  if(G._fiveSMission){
+    G._fiveSCount=(G._fiveSCount||0)+1;
+    notify('info','5S Progreso','Máquina optimizada '+G._fiveSCount+'/3. '+(G._fiveSCount<3?'Sigue con otra máquina.':'¡5S completado!'));
+    if(G._fiveSCount>=3){
+      const fm=G._fiveSMission; G._fiveSMission=null;
+      setTimeout(()=>finishMission(fm),800);
+    }
+  }
+};
 
 // ═══════════════════════════════════════════════════════
 // MG2 OVERLAY (minigame window)
@@ -3995,11 +4122,38 @@ function openMiguelDialog(){
   `,[{label:'Gracias Don Miguel',fn:closeModal}]);
 }
 
+let _miguelPatrolIdx=0, _miguelPatrolTimer=0;
+const MIGUEL_PATROLS=[
+  new THREE.Vector3(0,0,20),
+  new THREE.Vector3(45,0,5),
+  new THREE.Vector3(-43,0,8),
+  new THREE.Vector3(20,0,-38),
+  new THREE.Vector3(0,0,26)
+];
+
 function updateMiguelGhost(dt){
-  if(!miguelGhost||!miguelGhost.visible) return;
+  if(!miguelGhost) return;
   miguelTimer+=dt;
   miguelGhost.position.y=Math.sin(miguelTimer*1.2)*.2+.1;
   miguelGhost.rotation.y+=dt*.4;
+
+  // Wandering logic
+  if(miguelGhost.visible){
+    _miguelPatrolTimer+=dt;
+    const target=MIGUEL_PATROLS[_miguelPatrolIdx];
+    miguelGhost.position.lerp(target, dt*.2);
+    if(miguelGhost.position.distanceTo(target)<1){
+      _miguelPatrolIdx=(_miguelPatrolIdx+1)%MIGUEL_PATROLS.length;
+    }
+  }
+}
+
+function updatePlantOrder(dt){
+  if(G.phase!=='playing') return;
+  G.plantOrder=Math.max(0,G.plantOrder-dt*.1);
+  if(G.plantOrder<40 && Math.random()<0.001){
+    miguelSay("La planta está volviendo al caos. Aplica 5S en las máquinas para recuperar el orden y la eficiencia.");
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -4542,9 +4696,9 @@ function startOperatingCosts(){
   // Costo fijo cada 3 minutos (arriendo, energía, sueldos base)
   setInterval(()=>{
     if(G.phase!=='playing'||!G.strategy) return;
-    G.budget=Math.max(0,G.budget-40000);
+    G.budget=Math.max(0,G.budget-10000);
     updateBudgetHUD();
-  },180000);
+  },15000);
 }
 
 // Machine upgrade cost helper (called from openMachine dialogs)
@@ -4557,8 +4711,71 @@ window.machineUpgradeCost=function(mid){
 };
 
 // ═══════════════════════════════════════════════════════
-// MINIMAP — THREAT MARKERS & PATH LINE
+// VEHICLE DELIVERY GAME
 // ═══════════════════════════════════════════════════════
+let deliveryGameActive=false, deliveryTimer=0, deliveryCheckpoints=[], deliveryPos={x:0,y:0}, deliveryScore=0;
+const deliveryCanvas=document.createElement('canvas');
+deliveryCanvas.id='delivery-canvas';
+deliveryCanvas.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;background:#1a2228;display:none;cursor:none';
+document.body.appendChild(deliveryCanvas);
+const dCtx=deliveryCanvas.getContext('2d');
+
+function launchDeliveryGame(targetClient){
+  deliveryGameActive=true;
+  deliveryCanvas.style.display='block';
+  deliveryCanvas.width=window.innerWidth;
+  deliveryCanvas.height=window.innerHeight;
+  deliveryPos={x:deliveryCanvas.width/2,y:deliveryCanvas.height-100};
+  deliveryTimer=60;
+  deliveryScore=0;
+  deliveryCheckpoints=[];
+  // Create 3 random checkpoints
+  for(let i=0;i<3;i++){
+    deliveryCheckpoints.push({x:Math.random()*deliveryCanvas.width*0.8+deliveryCanvas.width*0.1,y:Math.random()*deliveryCanvas.height*0.6+100,reached:false});
+  }
+  notify('info','🚚 Entrega en Curso','Lleva los productos a los clientes en la ciudad. ¡Rápido!');
+  requestAnimationFrame(updateDeliveryGame);
+}
+
+function updateDeliveryGame(){
+  if(!deliveryGameActive) return;
+  // Clear
+  dCtx.fillStyle='#1a2228'; dCtx.fillRect(0,0,deliveryCanvas.width,deliveryCanvas.height);
+  // Movement
+  const s=4;
+  if(keys['KeyW']||keys['ArrowUp']) deliveryPos.y-=s;
+  if(keys['KeyS']||keys['ArrowDown']) deliveryPos.y+=s;
+  if(keys['KeyA']||keys['ArrowLeft']) deliveryPos.x-=s;
+  if(keys['KeyD']||keys['ArrowRight']) deliveryPos.x+=s;
+  // Boundaries
+  deliveryPos.x=Math.max(0,Math.min(deliveryCanvas.width,deliveryPos.x));
+  deliveryPos.y=Math.max(0,Math.min(deliveryCanvas.height,deliveryPos.y));
+  // Draw checkpoints
+  deliveryCheckpoints.forEach((cp,i)=>{
+    dCtx.beginPath(); dCtx.arc(cp.x,cp.y,15,0,Math.PI*2);
+    dCtx.fillStyle=cp.reached?'#79df4b':'#efb41c'; dCtx.fill();
+    dCtx.fillStyle='#fff'; dCtx.font='12px Arial'; dCtx.fillText(`Cliente ${i+1}`,cp.x-20,cp.y-20);
+    // Collision
+    if(!cp.reached&&Math.hypot(deliveryPos.x-cp.x,deliveryPos.y-cp.y)<20){
+      cp.reached=true; deliveryScore++;
+      notify('success','✅ Entrega Realizada','Cliente alcanzado!');
+    }
+  });
+  // Draw car
+  dCtx.fillStyle='#45d4ff'; dCtx.fillRect(deliveryPos.x-10,deliveryPos.y-15,20,30);
+  // HUD
+  dCtx.fillStyle='#fff'; dCtx.font='20px Arial'; dCtx.fillText(`Entregas: ${deliveryScore}/3`, 20, 40);
+  // Win condition
+  if(deliveryScore>=3){
+    deliveryGameActive=false;
+    deliveryCanvas.style.display='none';
+    G.budget+=500000; updateBudgetHUD();
+    notify('success','🏆 Misión Completada','¡Entregas exitosas! Bono de $500,000 CLP.');
+    showStory('Sistema','"Productos entregados a tiempo. La satisfacción del cliente ha subido."');
+    return;
+  }
+  requestAnimationFrame(updateDeliveryGame);
+}
 // Extended minimap: threats and path (called after drawMinimap each frame)
 function drawMinimapExtras(){
   if(G.phase!=='playing') return;
@@ -4938,6 +5155,9 @@ function animate(time){
     n.position.y=Math.sin(tSec*1.2+i*.7)*.035;
     n.rotation.y=Math.sin(tSec*.4+i)*.2;
   });
+
+  updateMiguelGhost(dt);
+  updatePlantOrder(dt);
 
   // Mint underlight pulse
   mintLight.intensity=0.85+Math.sin(tSec*2)*.15;
