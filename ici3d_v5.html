@@ -1486,20 +1486,31 @@ window.chooseStrategy=function(s){
     addScore(200);
     const chip=document.getElementById('strat-chip');
     chip.textContent='🎯 DIFERENCIACIÓN'; chip.style.cssText='display:inline-block;background:rgba(0,229,204,.15);color:#00e5cc;padding:3px 10px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:1px;margin-left:6px';
-    notify('success','Estrategia Elegida','Diferenciación seleccionada. Ve a Procesos para agregar la fórmula blanqueadora y a RRHH para contratar el personal adecuado.');
-    showStory('Miguel González . Director','Excelente. Con diferenciación necesitamos mejorar la fórmula. Ve al tanque mezclador para añadir el nuevo ingrediente blanqueador y luego contrata personal capacitado en calidad.');
   } else {
     applyKPI({efficiency:20,morale:-5,quality:-5,defectRate:2});
     addScore(150);
     const chip=document.getElementById('strat-chip');
     chip.textContent='💰 COSTOS'; chip.style.cssText='display:inline-block;background:rgba(239,180,28,.15);color:#efb41c;padding:3px 10px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:1px;margin-left:6px';
-    notify('success','Estrategia Elegida','Liderazgo en costos. Ve a Procesos para aumentar velocidad de línea y a Logística para negociar con proveedores.');
-    showStory('Miguel González . Director','Bien. Para liderazgo en costos necesitamos maximizar la velocidad de la línea. Ve al homogeneizador y la llenadora para ajustar los parámetros de producción.');
   }
-  // NO abrir budget allocation automáticamente — el jugador ya tiene suficiente info
-  // El presupuesto se asigna automáticamente de forma balanceada
   document.getElementById('budget-hud').style.display='block';
   updateBudgetHUD();
+  // ── ARRANCAR EL JUEGO: presupuesto acotado + producción + PRIMERA MISIÓN ──
+  G.budget=400000;
+  startOperatingCosts();
+  // Primera misión aparece en 2 segundos
+  setTimeout(()=>{
+    checkMissionTrigger('strategy');
+  },2000);
+  // Miguel aparece con la primera instrucción
+  setTimeout(()=>{
+    if(s==='diff'){
+      showStory('👻 Miguel . Fundador','"Ve al Tanque Mezclador — necesitamos añadir la fórmula blanqueadora. La flecha amarilla te guía."');
+      miguelSay('"Bienvenido. Tu primera misión llega en segundos. Sigue la flecha amarilla en pantalla para saber a dónde ir en todo momento."');
+    } else {
+      showStory('👻 Miguel . Fundador','"Ve al Homogeneizador — Walmart necesita más unidades. La flecha amarilla te guía."');
+      miguelSay('"Liderazgo en costos: necesitamos velocidad. Tu primera misión llega ahora. Sigue la flecha amarilla."');
+    }
+  },3500);
 };
 
 function drawRadar(cv){
