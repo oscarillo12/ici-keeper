@@ -1340,8 +1340,8 @@ function doInteract(){
     if(G.inspections.length>=G.MAX_INSP){toggleInspMode();}
     G.zonesComplete.add('cal');
     updateZoneSidebar();
-    // Auto-complete quality inspect mission if pending
-    if(G._qualMissionPending&&G.inspections.length>=2){const qM=G._qualMissionPending;G._qualMissionPending=null;setTimeout(()=>finishMission(qM),1500);}
+    // Auto-complete quality inspect mission con 1 sola inspección (no necesita 5)
+    if(G._qualMissionPending&&G.inspections.length>=1){const qM=G._qualMissionPending;G._qualMissionPending=null;setTimeout(()=>finishMission(qM),1500);}
     return;
   }
 
@@ -1488,11 +1488,10 @@ window.chooseStrategy=function(s){
     notify('success','Estrategia Elegida','Liderazgo en costos. Ve a Procesos para aumentar velocidad de línea y a Logística para negociar con proveedores.');
     showStory('Miguel González · Director','Bien. Para liderazgo en costos necesitamos maximizar la velocidad de la línea. Ve al homogeneizador y la llenadora para ajustar los parámetros de producción.');
   }
-  // Show budget HUD, then open budget allocation screen
+  // NO abrir budget allocation automáticamente — el jugador ya tiene suficiente info
+  // El presupuesto se asigna automáticamente de forma balanceada
   document.getElementById('budget-hud').style.display='block';
   updateBudgetHUD();
-  // Open budget allocation after brief story
-  setTimeout(()=>openBudgetAlloc(),4000);
 };
 
 function drawRadar(cv){
@@ -1624,17 +1623,16 @@ function renderMachTab(){
   const alreadyUpgraded=G.processUpgrades.has(m.id);
   const canUpgrade=md.upgrade&&G.strategy===md.upgrade.strat&&!alreadyUpgraded;
   const tabs=['⚙ Parámetros','🔧 Mejora','📊 Estado'];
-  const tabBar=`<div style="display:flex;gap:4px;margin-bottom:14px">${tabs.map((t,i)=>`<button onclick="_machTab=${i};renderMachTab()" style="flex:1;padding:7px;background:${_machTab===i?'rgba(255,106,0,.18)':'rgba(255,255,255,.04)'};border:1px solid ${_machTab===i?'#ff6a00':'rgba(255,255,255,.1)'};border-radius:6px;color:${_machTab===i?'#ff6a00':'#7a9aaa'};font-size:11px;font-weight:700;cursor:pointer">${t}</button>`).join('')}</div>`;
+  const tabBar=`<div style="display:flex;gap:4px;margin-bottom:14px">${tabs.map((t,i)=>`<button onclick="setMachTab(${i})" style="flex:1;padding:7px;background:${_machTab===i?'rgba(255,106,0,.18)':'rgba(255,255,255,.04)'};border:1px solid ${_machTab===i?'#ff6a00':'rgba(255,255,255,.1)'};border-radius:6px;color:${_machTab===i?'#ff6a00':'#7a9aaa'};font-size:11px;font-weight:700;cursor:pointer">${t}</button>`).join('')}</div>`;
   window._machTab=_machTab;
   let body=tabBar;
   if(_machTab===0){
     const sliders=md.params.map((p,i)=>`<div class="slider-r"><label>${p.label}</label><input type="range" min="${p.min}" max="${p.max}" value="${p.val}" id="sl-${m.id}-${i}" oninput="document.getElementById('sv-${m.id}-${i}').textContent=this.value"><span class="sv2" id="sv-${m.id}-${i}">${p.val}</span></div>`).join('');
     body+=`<div class="mach-card"><h4>⚙ ${md.name}</h4>${sliders}<button class="btn-p" style="margin-top:8px;width:100%" onclick="applyMachineParams('${m.id}')">Aplicar cambios (+80 pts)</button></div>`;
     // Sebastián tip inline
-    const sebKey=m.id==='mez'?'mezclado':m.id==='hom'?'homogeneizacion':m.id==='lle'?'llenado':m.id==='sel'?'sellado':null;
-    if(sebKey){
-      const sd=SEB_CHEM_DATA[sebKey];
-      body+=`<div class="ibox" style="margin-top:8px;font-size:11px;border-color:#45d4ff44">🧪 <strong style="color:#45d4ff">Sebastián dice:</strong> T° óptima <strong style="color:#ff6600">${sd.temp}</strong> · Tiempo: <strong style="color:#45d4ff">${sd.time}</strong><br><span style="color:#5a7a8a">${sd.notes.split('.')[0]}.</span></div>`;
+    const sd=SEB_CHEM_DATA[m.id];
+    if(sd){
+      body+=`<div class="ibox" style="margin-top:8px;font-size:11px;border-color:#45d4ff44">🧪 <strong style="color:#45d4ff">Sebastián:</strong> <strong style="color:#ff6600">${sd.param}</strong><br><span style="color:#5a7a8a">${sd.notes.split('.')[0]}.</span></div>`;
     }
   } else if(_machTab===1){
     if(canUpgrade){
@@ -1645,10 +1643,19 @@ function renderMachTab(){
       body+=`<div class="ibox">Esta mejora requiere estrategia <strong>${md.upgrade?.strat==='diff'?'Diferenciación':'Costos'}</strong>.</div>`;
     }
   } else {
-    body+=`<div class="card"><div class="stat-r"><span class="sl">Defectos en etapa</span><span class="sv ${G.kpi.defectRate>10?'bad':'good'}">${(G.kpi.defectRate*0.2).toFixed(1)}%</span></div><div class="stat-r"><span class="sl">Output estimado</span><span class="sv">${Math.round(G.kpi.efficiency*0.45)} ud/min</span></div><div class="stat-r"><span class="sl">Estado</span><span class="sv good">Operativa</span></div></div>`;
+    const stageQty=(typeof PROD!=='undefined'?PROD.inProcess[m.id]:0)||0;
+    const hasInsp=G.inspections.some(ins=>ins.machineId===m.id);
+    body+=`<div class="card">
+      <div class="stat-r"><span class="sl">En proceso AHORA</span><span class="sv" style="color:#00e5cc">${stageQty} unidades</span></div>
+      <div class="stat-r"><span class="sl">Defectos en etapa</span><span class="sv ${G.kpi.defectRate>10?'bad':'good'}">${(G.kpi.defectRate*0.2).toFixed(1)}%</span></div>
+      <div class="stat-r"><span class="sl">Output estimado</span><span class="sv">${Math.round(G.kpi.efficiency*0.45)} ud/min</span></div>
+      <div class="stat-r"><span class="sl">Inspección activa</span><span class="sv ${hasInsp?'good':'bad'}">${hasInsp?'✓ Sí':'✗ No'}</span></div>
+      <div class="stat-r"><span class="sl">Estado máquina</span><span class="sv good">Operativa</span></div>
+    </div>`;
   }
   openModal(`⚙ ${md.name}`,'Producción FrescoMax®',body,[{label:'Cerrar',fn:closeModal}]);
 }
+window.setMachTab=function(i){_machTab=i;window._machTab=i;renderMachTab();};
 window.renderMachTab=renderMachTab;
 
 window.applyMachineParams=function(mid){
@@ -1866,70 +1873,121 @@ function showISOModule(step){
 // ═══════════════════════════════════════════════════════
 // ZONE: CALIDAD
 // ═══════════════════════════════════════════════════════
-// Quality modal with tabs (no text overload)
+// Quality modal with tabs — fix navegación + defectos útiles + delegación
 let _qualTab=0;
+window._qualTab=0;
+window.setQualTab=function(i){_qualTab=i;window._qualTab=i;renderQualityTab();};
+
 function openQuality(){
-  _qualTab=0; renderQualityTab();
+  _qualTab=0;window._qualTab=0;
+  renderQualityTab();
   G.zonesComplete.add('cal'); updateZoneSidebar();
 }
+
 function renderQualityTab(){
+  _qualTab=window._qualTab||0;
   const tabs=['🔍 Inspecciones','📊 Defectos','⚙ Acciones'];
-  const tabBar=`<div style="display:flex;gap:4px;margin-bottom:14px">${tabs.map((t,i)=>`<button onclick="_qualTab=${i};renderQualityTab()" style="flex:1;padding:7px;background:${_qualTab===i?'rgba(239,180,28,.18)':'rgba(255,255,255,.04)'};border:1px solid ${_qualTab===i?'#efb41c':'rgba(255,255,255,.1)'};border-radius:6px;color:${_qualTab===i?'#efb41c':'#7a9aaa'};font-size:11px;font-weight:700;cursor:pointer">${t}</button>`).join('')}</div>`;
-  window._qualTab=_qualTab;
+  const tabBar=`<div style="display:flex;gap:4px;margin-bottom:12px">${tabs.map((t,i)=>`<button onclick="setQualTab(${i})" style="flex:1;padding:7px;background:${_qualTab===i?'rgba(239,180,28,.2)':'rgba(255,255,255,.04)'};border:1px solid ${_qualTab===i?'#efb41c':'rgba(255,255,255,.1)'};border-radius:6px;color:${_qualTab===i?'#efb41c':'#7a9aaa'};font-size:11px;font-weight:700;cursor:pointer">${t}</button>`).join('')}</div>`;
   let body=tabBar;
+
   if(_qualTab===0){
-    // Tab 1: Inspections only
-    const placedNames=G.inspections.map(i=>i.name).join(', ')||'Ninguno';
+    // ── Tab 1: Inspecciones ──
+    const placed=G.inspections.map(i=>i.name).join(', ')||'Ninguno';
     body+=G.inspections.length===0
-      ?`<div class="ibox red">Aún no hay inspecciones. Presiona <strong>[Q]</strong> y luego <strong>[E]</strong> junto a cada máquina.</div>`
-      :`<div class="ibox green">✓ ${G.inspections.length} activas: <strong>${placedNames}</strong></div>`;
-    body+=`<div class="ibox gold" style="margin-top:10px"><strong>💡 ISO 9001:</strong> Inspeccionar al inicio del proceso cuesta 10× menos que detectar el defecto al empacar.</div>`;
-    body+=`<button class="btn-g" style="margin-top:12px;width:100%" onclick="closeModal();toggleInspMode()">🔍 Activar Modo Inspección [Q]</button>`;
+      ?`<div class="ibox red">Ninguna inspección activa. Presiona <strong>[Q]</strong> → acércate a una máquina → <strong>[E]</strong>.</div>`
+      :`<div class="ibox green" style="margin-bottom:8px">✓ ${G.inspections.length} activas: <strong>${placed}</strong></div>`;
+    body+=`<div class="ibox gold"><strong>💡 ISO 9001 cl.8.5:</strong> Inspeccionar al <em>inicio</em> del proceso evita que el defecto se propague. Un defecto en Mezclador = solo costo de MP. Detectado al empacar = costo de todo el proceso.</div>`;
+    body+=`<div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn-g" style="flex:1" onclick="closeModal();toggleInspMode()">🔍 Modo Inspección [Q]</button>
+      <button class="btn-s" style="flex:1" onclick="delegateTask('inspeccion')">👤 Delegar a Diego Torres</button>
+    </div>`;
+
   } else if(_qualTab===1){
-    // Tab 2: Defect breakdown
-    body+=`<div style="margin-bottom:8px;font-size:12px;color:#e0e8ef">Tasa de defectos actual: <strong style="color:${G.kpi.defectRate>10?'#ff5050':'#79df4b'}">${G.kpi.defectRate.toFixed(1)}%</strong></div>`;
-    body+=MACHINES.map((m,i)=>{
-      const inspHere=G.inspections.some(ins=>ins.machineId===m.id);
-      const baseRate=[4,3.5,3,2.5,2.5,1.5][i];
-      const caught=inspHere?baseRate*.85:0;
-      return `<div class="insp-slot ${inspHere?'placed':''}">
-        <span class="is-icon">${inspHere?'🔍':'⚙'}</span>
-        <div class="is-info"><div class="is-name">${m.name}</div><div class="is-sub">${inspHere?`Controlado → ${(baseRate-caught).toFixed(1)}%`:`${baseRate.toFixed(1)}% defectos`}</div></div>
-        <div class="is-impact" style="color:${inspHere?'#79df4b':'#5a7a8a'}">${inspHere?`-${caught.toFixed(1)}%`:'Sin control'}</div>
+    // ── Tab 2: Análisis de Defectos útil para tomar decisiones ──
+    const dr=G.kpi.defectRate;
+    const defColor=dr>15?'#ff5050':dr>8?'#efb41c':'#79df4b';
+    const defIcon=dr>15?'🔴':dr>8?'🟡':'🟢';
+    const defLevel=dr>15?'CRÍTICO':dr>8?'MODERADO':'BAJO';
+    body+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:10px">
+      <div>
+        <div style="font-size:9px;color:#5a7a8a;text-transform:uppercase">Tasa actual</div>
+        <div style="font-size:28px;font-weight:900;color:${defColor}">${dr.toFixed(1)}%</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:${defColor}">${defIcon} ${defLevel}</div>
+        <div style="font-size:9px;color:#3a6070">Meta: bajo 5%</div>
+      </div>
+    </div>`;
+
+    // Pareto de causas raíz
+    const stages=[
+      {m:MACHINES[0],base:4.0,cause:'MP fuera de especificación',     fix:'Negociar proveedor (tab Acciones)'},
+      {m:MACHINES[1],base:3.5,cause:'T° mezcla incorrecta (óptimo 72°C)',fix:'Ajustar Tanque Mezclador [E]'},
+      {m:MACHINES[2],base:3.0,cause:'RPM agitación fuera de rango',   fix:'Calibrar Homogeneizador [E]'},
+      {m:MACHINES[3],base:2.5,cause:'Presión llenado inconsistente',  fix:'Pedir calibración a Sebastián [E]'},
+      {m:MACHINES[4],base:2.5,cause:'T° sello baja → fugas',          fix:'Ajustar Selladora a 180°C [E]'},
+      {m:MACHINES[5],base:1.5,cause:'Velocidad excesiva daña envase', fix:'Reducir vel. Empacadora [E]'},
+    ];
+    body+=`<div style="font-size:9px;color:#efb41c;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700">Pareto — Mayor a menor impacto</div>`;
+    const totalBase=stages.reduce((s,d)=>s+d.base,0);
+    stages.forEach(sd=>{
+      const insp=G.inspections.some(ins=>ins.machineId===sd.m.id);
+      const actual=insp?sd.base*.15:sd.base;
+      const barW=Math.round(actual/4*100);
+      const prio=!insp&&actual>=3?'🔴':!insp&&actual>=2?'🟡':'🟢';
+      body+=`<div style="margin-bottom:5px;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:5px;border-left:2px solid ${insp?'#79df4b55':'#ff505066'}">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+          <span style="font-size:10px;font-weight:700;color:#e0e8ef">${prio} ${sd.m.name}</span>
+          <span style="font-size:10px;color:${insp?'#79df4b':'#ff5050'};font-weight:700">${actual.toFixed(1)}%</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:3px"><div style="height:100%;width:${barW}%;background:${insp?'#79df4b':'#ff5050'};border-radius:2px"></div></div>
+        <div style="font-size:9px;color:${insp?'#5a7a8a':'#efb41c'}">${insp?'✓ Controlado':'👉 '+sd.fix}</div>
       </div>`;
-    }).join('');
+    });
+    const topDefect=stages.filter(sd=>!G.inspections.some(ins=>ins.machineId===sd.m.id)).sort((a,b)=>b.base-a.base)[0];
+    if(topDefect){
+      body+=`<div class="ibox gold" style="margin-top:8px;font-size:11px"><strong>🎯 Acción prioritaria:</strong> <strong style="color:#ff5050">${topDefect.m.name}</strong> — ${topDefect.cause}. <strong style="color:#00e5cc">${topDefect.fix}</strong></div>`;
+    } else {
+      body+=`<div class="ibox green" style="margin-top:8px;font-size:11px">✓ Todas las etapas bajo control.</div>`;
+    }
+
   } else {
-    // Tab 3: Actions
-    body+=`<div style="display:flex;flex-direction:column;gap:8px">
-      <div class="card" style="cursor:pointer;border-color:${G.providerNegotiated?'rgba(121,223,75,.3)':'rgba(255,255,255,.07)'}">
+    // ── Tab 3: Acciones ──
+    body+=`<div style="display:flex;flex-direction:column;gap:7px">
+      <div class="card" style="border-color:${G.providerNegotiated?'rgba(121,223,75,.3)':'rgba(255,80,80,.25)'}">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <h4 style="margin:0">${G.providerNegotiated?'✓ ':''} Negociar Proveedores</h4>
-          ${!G.providerNegotiated?`<button class="btn-s" style="font-size:10px;padding:4px 10px" onclick="doNegotiate()">Negociar → -4% defectos</button>`:`<div class="tag gr">Completado</div>`}
+          <div><h4 style="margin:0;font-size:11px">${G.providerNegotiated?'✓ ':''} Negociar Proveedores</h4>
+          <div style="font-size:9px;color:#5a7a8a">Exigir cert. calidad a MP → -4% defectos</div></div>
+          ${!G.providerNegotiated
+            ?`<div style="display:flex;gap:4px"><button class="btn-s" style="font-size:9px;padding:4px 8px" onclick="doNegotiate()">Hacer</button><button class="btn-s" style="font-size:9px;padding:4px 8px;border-color:#c87fff;color:#c87fff" onclick="delegateTask('negociar')">Delegar</button></div>`
+            :`<div class="tag gr">✓</div>`}
         </div>
       </div>
-      <div class="card" style="cursor:pointer;border-color:${G.auditDone?'rgba(121,223,75,.3)':'rgba(255,255,255,.07)'}">
+      <div class="card" style="border-color:${G.auditDone?'rgba(121,223,75,.3)':'rgba(255,80,80,.25)'}">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <h4 style="margin:0">${G.auditDone?'✓ ':''} Auditoría ISO Interna</h4>
-          ${!G.auditDone?`<button class="btn-s" style="font-size:10px;padding:4px 10px" onclick="doAudit()">Auditar → +8% calidad</button>`:`<div class="tag gr">Completado</div>`}
+          <div><h4 style="margin:0;font-size:11px">${G.auditDone?'✓ ':''} Auditoría Interna ISO</h4>
+          <div style="font-size:9px;color:#5a7a8a">Identifica no conformidades → +8% calidad</div></div>
+          ${!G.auditDone
+            ?`<div style="display:flex;gap:4px"><button class="btn-s" style="font-size:9px;padding:4px 8px" onclick="doAudit()">Hacer</button><button class="btn-s" style="font-size:9px;padding:4px 8px;border-color:#c87fff;color:#c87fff" onclick="delegateTask('auditoria')">Delegar</button></div>`
+            :`<div class="tag gr">✓</div>`}
         </div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <h4 style="margin:0">Control Estadístico (SPC)</h4>
+          <div><h4 style="margin:0;font-size:11px">Control Estadístico (SPC)</h4>
+          <div style="font-size:9px;color:#5a7a8a">Monitoreo continuo media/varianza proceso</div></div>
           <div class="tag c">Activo</div>
         </div>
       </div>
     </div>
-    <div style="font-size:10px;color:#5a7a8a;margin-top:10px">Puntos disponibles: ${G.MAX_INSP - G.inspections.length} / ${G.MAX_INSP}</div>`;
+    <div style="font-size:9px;color:#5a7a8a;margin-top:8px">Puntos disponibles: ${G.MAX_INSP-G.inspections.length}/${G.MAX_INSP} · [Q] para colocar</div>`;
   }
-  openModal('🔬 Calidad — TechDent','ISO 9001 · FrescoMax®',body,[
-    {label:'Cerrar',fn:closeModal}
-  ]);
+
+  openModal('🔬 Control de Calidad','TechDent Chile · ISO 9001 · FrescoMax®',body,[{label:'Cerrar',fn:closeModal}]);
 }
 window.renderQualityTab=renderQualityTab;
 
 window.doNegotiate=function(){
-  if(G.providerNegotiated){return;}
   G.providerNegotiated=true;
   applyKPI({defectRate:-4,quality:5});
   addScore(120);
@@ -2004,77 +2062,123 @@ window.wmsTab=function(tab){
 };
 
 function wmsRenderDash(){
+  const rate=Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1));
+  const otif=Math.round(G.kpi.efficiency*.9);
   return `
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
-    <div class="card kpi-big"><span class="kb-val" style="color:#00e5cc">${Math.round(G.kpi.efficiency*.9)}%</span><span class="kb-l">OTIF</span></div>
-    <div class="card kpi-big"><span class="kb-val" style="color:#79df4b">12,400</span><span class="kb-l">Unidades Stock</span></div>
-    <div class="card kpi-big"><span class="kb-val" style="color:#efb41c">${(G.kpi.defectRate*.4).toFixed(1)}%</span><span class="kb-l">Rechazo Transporte</span></div>
-    <div class="card kpi-big"><span class="kb-val" style="color:#c87fff">4</span><span class="kb-l">Rutas Activas</span></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="card kpi-big"><span class="kb-val" style="color:#00e5cc">${otif}%</span><span class="kb-l">OTIF</span></div>
+    <div class="card kpi-big"><span class="kb-val" style="color:#79df4b">${PROD.warehouse.toLocaleString()}</span><span class="kb-l">Stock Bodega</span></div>
+    <div class="card kpi-big"><span class="kb-val" style="color:#efb41c">${rate}</span><span class="kb-l">ud/min</span></div>
+    <div class="card kpi-big"><span class="kb-val" style="color:#c87fff">${PROD.totalProduced.toLocaleString()}</span><span class="kb-l">Total Prod.</span></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-    <div class="card">
-      <h4>Despachos Hoy (27/08/2026)</h4>
-      <table class="wms-tbl" style="margin-top:8px">
-        <thead><tr><th>Cliente</th><th>Und.</th><th>Estado</th></tr></thead>
-        <tbody>
-          <tr><td>Cruz Verde (Santiago)</td><td>1,200</td><td><span class="sbadge ready">Listo</span></td></tr>
-          <tr><td>Salco Bond (Vitacura)</td><td>800</td><td><span class="sbadge pend">Pendiente</span></td></tr>
-          <tr><td>Walmart Chile (Maipú)</td><td>2,400</td><td><span class="sbadge pend">Pendiente</span></td></tr>
-          <tr><td>Líder (Providencia)</td><td>600</td><td><span class="sbadge ship">Despachado</span></td></tr>
-        </tbody>
-      </table>
+
+  <div class="card" style="margin-bottom:12px">
+    <h4 style="margin-bottom:10px;color:#ff6a00">⚙ Línea de Producción — Tiempo Real</h4>
+    <div style="display:flex;align-items:flex-end;gap:3px;overflow-x:auto;padding:4px 0">
+      ${Object.entries(PROD.inProcess).map(([s,qty],i)=>{
+        const names={alm:'Almacén',mez:'Mezclado',hom:'Homogen.',lle:'Llenado',sel:'Sellado',emp:'Empaque'};
+        const cols=['#3388ff','#00e5cc','#ff6a00','#45d4ff','#c87fff','#79df4b'];
+        const hasInsp=G.inspections.some(ins=>ins.machineId===s);
+        return `<div style="flex:1;min-width:55px;text-align:center">
+          <div style="font-size:16px;font-weight:900;color:${cols[i]}">${qty}</div>
+          <div style="font-size:7px;color:#5a7a8a">${names[s]}</div>
+          <div style="height:30px;background:rgba(255,255,255,.04);border-radius:3px;margin:3px 0;display:flex;align-items:flex-end">
+            <div style="width:100%;background:${cols[i]};border-radius:3px;height:${Math.min(100,qty/3)}%;min-height:2px"></div>
+          </div>
+          <div style="font-size:7px;color:${hasInsp?'#efb41c':'#3a6070'}">${hasInsp?'🔍':'·'}</div>
+        </div>${i<5?`<div style="color:#3a6070;padding-bottom:18px;font-size:11px">→</div>`:''}`;
+      }).join('')}
+      <div style="color:#3a6070;padding-bottom:18px;font-size:11px">→</div>
+      <div style="flex:1;min-width:60px;text-align:center">
+        <div style="font-size:16px;font-weight:900;color:#79df4b">${PROD.warehouse}</div>
+        <div style="font-size:7px;color:#5a7a8a">📦 Bodega</div>
+        <div style="height:30px;background:rgba(255,255,255,.04);border-radius:3px;margin:3px 0;display:flex;align-items:flex-end">
+          <div style="width:100%;background:#79df4b;border-radius:3px;height:${Math.min(100,PROD.warehouse/100)}%;min-height:2px"></div>
+        </div>
+        <button onclick="openSellModal()" style="font-size:7px;background:#79df4b22;border:1px solid #79df4b55;color:#79df4b;border-radius:3px;padding:2px 4px;cursor:pointer">VENDER</button>
+      </div>
     </div>
-    <div class="card">
-      <h4>Alertas del Sistema</h4>
-      <div class="ibox red" style="margin-top:8px"><strong>⚠ Ruta 2 subóptima:</strong> El orden de entregas genera 23% de km innecesarios. Ir a tab Rutas para optimizar.</div>
-      <div class="ibox warn" style="margin-top:6px"><strong>📦 Stock mínimo:</strong> FrescoMax Premium tiene 4,200 ud. El mínimo de seguridad es 5,000 ud.</div>
-      ${G.kpi.defectRate>10?'<div class="ibox red" style="margin-top:6px"><strong>🚫 Alta tasa de rechazo:</strong> '+( G.kpi.defectRate*.4).toFixed(1)+'% de pedidos rechazados por calidad. Mejorar inspecciones de calidad.</div>':''}
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:#5a7a8a;border-top:1px solid rgba(255,255,255,.05);padding-top:6px">
+      <span>Rechazadas: <strong style="color:#ff5050">${PROD.defectLost}</strong></span>
+      <span>Vendidas: <strong style="color:#79df4b">${PROD.totalSold.toLocaleString()}</strong></span>
+      <span>Ingresos: <strong style="color:#efb41c">$${PROD.revenue.toLocaleString()}</strong></span>
     </div>
   </div>
+
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h4 style="margin:0">📋 Órdenes Activas</h4>
+      <button onclick="openSellModal()" class="btn-p" style="font-size:9px;padding:4px 10px">💰 Despachar →</button>
+    </div>
+    ${PROD.pendingOrders.map(o=>{
+      const pct=Math.round(o.delivered/o.qty*100);
+      const done=o.delivered>=o.qty;
+      return `<div style="margin-bottom:5px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+          <span style="color:${done?'#79df4b':'#e0e8ef'}">${o.client} — ${o.qty} ud</span>
+          <span style="color:${done?'#79df4b':'#5a7a8a'}">${done?'✓ Listo':pct+'%'} · ${o.deadline}</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px">
+          <div style="height:100%;width:${pct}%;background:${done?'#79df4b':'#efb41c'};border-radius:2px;transition:.5s"></div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  ${G.kpi.defectRate>10?`<div class="ibox red" style="font-size:10px"><strong>⚠ Defectos ${G.kpi.defectRate.toFixed(1)}%:</strong> ${PROD.defectLost} unidades rechazadas. Ve a Calidad → instala inspecciones.</div>`:''}
+  ${!G.routeOptimized?`<div class="ibox gold" style="font-size:10px"><strong>💡 Ruta no optimizada:</strong> Tab Rutas → reducir km de despacho.</div>`:''}
   `;
 }
 
 function wmsRenderInv(){
-  const prods=[
-    {name:'FrescoMax 75ml Standard',sku:'FM-75S',stock:12400,min:8000,max:20000,color:'#00e5cc'},
-    {name:'FrescoMax 75ml Premium',sku:'FM-75P',stock:4200,min:5000,max:12000,color:'#c87fff'},
-    {name:'FrescoMax 125ml Standard',sku:'FM-125S',stock:6800,min:4000,max:15000,color:'#45d4ff'},
-    {name:'Cajas Cartón (packs)',sku:'PKG-CT1',stock:3200,min:2000,max:8000,color:'#efb41c'},
-  ];
-  return `<span class="sec-l">Inventario Actual — Planta TechDent</span>
+  return `
+  <span class="sec-l">Inventario en Tiempo Real</span>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="card" style="text-align:center"><div style="font-size:22px;font-weight:900;color:#79df4b">${PROD.warehouse.toLocaleString()}</div><div style="font-size:9px;color:#5a7a8a">En bodega</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:22px;font-weight:900;color:#ff5050">${PROD.defectLost.toLocaleString()}</div><div style="font-size:9px;color:#5a7a8a">Rechazadas</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:22px;font-weight:900;color:#efb41c">$${PROD.revenue.toLocaleString()}</div><div style="font-size:9px;color:#5a7a8a">Ingresos</div></div>
+  </div>
   <table class="wms-tbl">
-    <thead><tr><th>Producto</th><th>SKU</th><th>Stock</th><th>Disponibilidad</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Producto</th><th>Stock</th><th>Disponibilidad</th><th>Estado</th></tr></thead>
     <tbody>
-      ${prods.map(p=>{
-        const pct=Math.min(100,Math.round(p.stock/p.max*100));
-        const status=p.stock>=p.min?'ok':'low';
-        return `<tr>
-          <td>${p.name}</td><td style="color:#3a6070">${p.sku}</td>
-          <td>${p.stock.toLocaleString()}</td>
-          <td><div class="inv-bar2"><div class="inv-fill2" style="width:${pct}%;background:${p.color}"></div></div>${pct}%</td>
-          <td><span class="sbadge ${status==='ok'?'ready':'rej'}">${status==='ok'?'OK':'Bajo mínimo'}</span></td>
-        </tr>`;
-      }).join('')}
+      <tr><td>FrescoMax® ${G.strategy==='diff'?'Premium':'Standard'}</td>
+        <td><strong style="color:#79df4b">${PROD.warehouse.toLocaleString()}</strong></td>
+        <td><div class="inv-bar2"><div class="inv-fill2" style="width:${Math.min(100,PROD.warehouse/200)}%;background:#00e5cc"></div></div></td>
+        <td><span class="sbadge ${PROD.warehouse>100?'ready':'rej'}">${PROD.warehouse>100?'OK':'Stock bajo'}</span></td></tr>
+      <tr><td>WIP (en proceso)</td>
+        <td>${Object.values(PROD.inProcess).reduce((a,b)=>a+b,0)}</td>
+        <td><div class="inv-bar2"><div class="inv-fill2" style="width:60%;background:#ff6a00"></div></div></td>
+        <td><span class="sbadge pend">En línea</span></td></tr>
     </tbody>
   </table>
-  <div class="ibox" style="margin-top:14px"><strong>Producción diaria:</strong> ${Math.round(G.kpi.efficiency*0.4)} ud/hora × 8 horas = ${Math.round(G.kpi.efficiency*3.2)} unidades/turno. A este ritmo se repone el mínimo de seguridad en ${Math.round(5000/Math.max(1,G.kpi.efficiency*3.2)*10)} turnos.</div>
+  <div class="ibox" style="margin-top:10px;font-size:10px">
+    Producción: <strong style="color:#00e5cc">${Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1))} ud/min</strong> ·
+    Defectos: <strong style="color:#ff5050">${G.kpi.defectRate.toFixed(1)}%</strong> ·
+    Total producidas: <strong style="color:#79df4b">${PROD.totalProduced.toLocaleString()}</strong>
+  </div>
+  <button onclick="openSellModal()" class="btn-g" style="margin-top:10px;width:100%">💰 Vender Stock →</button>
   `;
 }
 
 function wmsRenderOrd(){
-  return `<span class="sec-l">Órdenes de Compra y Despacho</span>
+  return `<span class="sec-l">Órdenes de Venta — Estado Real</span>
   <table class="wms-tbl">
-    <thead><tr><th>OP#</th><th>Cliente / Proveedor</th><th>Tipo</th><th>Unidades</th><th>Fecha Entrega</th><th>Estado</th></tr></thead>
+    <thead><tr><th>OP#</th><th>Cliente</th><th>Pedido</th><th>Entregado</th><th>Progreso</th><th>Estado</th></tr></thead>
     <tbody>
-      <tr><td>#2847</td><td>Cruz Verde Farmacias</td><td>Venta</td><td>1,200</td><td>27/08/2026</td><td><span class="sbadge ready">Preparado</span></td></tr>
-      <tr><td>#2848</td><td>Salco Bond</td><td>Venta</td><td>800</td><td>28/08/2026</td><td><span class="sbadge pend">Pendiente</span></td></tr>
-      <tr><td>#2849</td><td>Walmart Chile S.A.</td><td>Venta</td><td>2,400</td><td>29/08/2026</td><td><span class="sbadge pend">Pendiente</span></td></tr>
-      <tr><td>#2850</td><td>Sodimac / Falabella</td><td>Venta</td><td>600</td><td>01/09/2026</td><td><span class="sbadge ship">En tránsito</span></td></tr>
-      <tr><td>OC-441</td><td>QuimChile (Fluoruro)</td><td>Compra MP</td><td>500 kg</td><td>30/08/2026</td><td><span class="sbadge ready">Aprobada</span></td></tr>
-      <tr><td>OC-442</td><td>SíliceIndustrial</td><td>Compra MP</td><td>800 kg</td><td>02/09/2026</td><td><span class="sbadge pend">Revisión</span></td></tr>
+      ${PROD.pendingOrders.map(o=>{
+        const pct=Math.round(o.delivered/o.qty*100);
+        const done=o.delivered>=o.qty;
+        return `<tr>
+          <td style="color:#3a6070">${o.id}</td><td>${o.client}</td>
+          <td>${o.qty.toLocaleString()}</td>
+          <td style="color:${done?'#79df4b':'#efb41c'}">${o.delivered.toLocaleString()}</td>
+          <td><div class="inv-bar2"><div class="inv-fill2" style="width:${pct}%;background:${done?'#79df4b':'#efb41c'}"></div></div>${pct}%</td>
+          <td><span class="sbadge ${done?'ready':PROD.warehouse>=(o.qty-o.delivered)?'pend':'rej'}">${done?'Listo':PROD.warehouse>=(o.qty-o.delivered)?'Stock OK':'Sin stock'}</span></td>
+        </tr>`;
+      }).join('')}
     </tbody>
   </table>
-  <div class="ibox gold" style="margin-top:12px"><strong>OP-2849 — Walmart:</strong> Esta es la orden más grande del mes. Requiere 2,400 unidades en 2 días. Asegúrate de tener stock suficiente y la ruta de despacho optimizada.</div>
+  <button onclick="openSellModal()" class="btn-g" style="margin-top:12px;width:100%">💰 Despachar Órdenes →</button>
+  <div class="ibox gold" style="margin-top:10px;font-size:10px">Fill Rate: <strong>${Math.round(PROD.pendingOrders.filter(o=>o.delivered>=o.qty).length/PROD.pendingOrders.length*100)}%</strong> órdenes completadas. Produce y vende para mejorar este indicador.</div>
   `;
 }
 
@@ -2150,28 +2254,28 @@ window.optimizeRoute=function(){
 };
 
 function wmsRenderKpi(){
+  const otif=Math.round(G.kpi.efficiency*.9);
+  const fillRate=Math.round(PROD.pendingOrders.filter(o=>o.delivered>=o.qty).length/PROD.pendingOrders.length*100);
+  const rejectRate=+(G.kpi.defectRate*.4).toFixed(1);
+  const rate=Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1));
   return `
-  <span class="sec-l">KPIs Logísticos — Dashboard Ejecutivo</span>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+  <span class="sec-l">KPIs Logísticos — Tiempo Real</span>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
     ${[
-      {label:'OTIF (%)',val:Math.round(G.kpi.efficiency*.9),target:95,color:'#00e5cc',unit:'%'},
-      {label:'Fill Rate',val:88,target:98,color:'#79df4b',unit:'%'},
-      {label:'Rechazo Transporte',val:+(G.kpi.defectRate*.4).toFixed(1),target:2,color:'#ff5050',unit:'%',inv:true},
-      {label:'Días de Inventario',val:18,target:15,color:'#efb41c',unit:'d'},
-      {label:'Costo Logístico',val:12.4,target:10,color:'#c87fff',unit:'%ventas',inv:true},
-      {label:'Lead Time Entrega',val:24,target:18,color:'#45d4ff',unit:'hrs',inv:true},
-    ].map(k=>`
-      <div class="card">
-        <div style="font-size:10px;color:#3a6070;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">${k.label}</div>
-        <div style="font-size:28px;font-weight:900;color:${k.color};margin-bottom:4px">${k.val}${k.unit}</div>
-        <div style="font-size:10px;color:#5a7a8a">Target: ${k.target}${k.unit}</div>
-        <div class="progress-bar" style="margin-top:6px">
-          <div class="progress-fill" style="background:${k.color};width:${k.inv?Math.min(100,k.target/Math.max(.1,k.val)*100):Math.min(100,k.val/k.target*100)}%"></div>
-        </div>
-      </div>
-    `).join('')}
+      {label:'OTIF',val:otif,target:95,color:'#00e5cc',unit:'%'},
+      {label:'Fill Rate',val:fillRate,target:100,color:'#79df4b',unit:'%'},
+      {label:'Rechazo',val:rejectRate,target:2,color:'#ff5050',unit:'%',inv:true},
+      {label:'Producción',val:rate,target:80,color:'#efb41c',unit:' ud/min'},
+      {label:'Ingresos',val:Math.round(PROD.revenue/1000),target:5000,color:'#c87fff',unit:'k CLP'},
+      {label:'Vendidas',val:PROD.totalSold,target:5000,color:'#45d4ff',unit:''},
+    ].map(k=>`<div class="card">
+      <div style="font-size:9px;color:#3a6070;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${k.label}</div>
+      <div style="font-size:20px;font-weight:900;color:${k.color}">${k.val.toLocaleString()}${k.unit}</div>
+      <div style="font-size:9px;color:#5a7a8a">Meta: ${k.target}${k.unit}</div>
+      <div class="progress-bar" style="margin-top:4px"><div class="progress-fill" style="background:${k.color};width:${k.inv?Math.min(100,k.target/Math.max(.1,k.val)*100):Math.min(100,k.val/k.target*100)}%"></div></div>
+    </div>`).join('')}
   </div>
-  <div class="ibox"><strong>Análisis:</strong> El principal problema logístico es la ruta de despacho no optimizada y la tasa de rechazos por calidad de producto. Optimiza la ruta en el tab "Rutas" y mejora inspecciones de calidad para reducir rechazos en transporte.</div>
+  <div class="ibox"><strong>Estado:</strong> Eficiencia ${Math.round(G.kpi.efficiency)}% · Bodega: ${PROD.warehouse} ud · Defectos: ${G.kpi.defectRate.toFixed(1)}%</div>
   `;
 }
 
@@ -2673,65 +2777,205 @@ window.wHit=function(idx){
 // ═══════════════════════════════════════════════════════
 // BREAK ROOM
 // ═══════════════════════════════════════════════════════
+// BREAK ROOM — con animaciones de trabajadores, cervezas, besos
+// ═══════════════════════════════════════════════════════
+const BREAK_ANIMS=[]; // objetos animados en la sala
 (function buildBreakRoom(){
+  const BX=-55,BZ=18; // posición base
   const g=new THREE.Group();
   const wM=new THREE.MeshStandardMaterial({color:0x0d1a1e,roughness:.9});
   // Back wall
   const bw=new THREE.Mesh(new THREE.BoxGeometry(14,8,.25),wM);bw.position.set(0,4,5.9);g.add(bw);
-  // Floor mat
+  // Floor mat verde
   const mat=new THREE.Mesh(new THREE.PlaneGeometry(12,10),new THREE.MeshStandardMaterial({color:0x141c10,roughness:.95}));
   mat.rotation.x=-Math.PI/2;mat.position.y=.02;g.add(mat);
-  // Table
+  // Mesa principal
   const tbl=new THREE.Mesh(new THREE.BoxGeometry(3.2,.08,1.2),new THREE.MeshStandardMaterial({color:0x5c3a1a,roughness:.7}));
   tbl.position.set(0,.82,0);g.add(tbl);
-  // Table legs
   [[-1.4,-.35],[1.4,-.35],[-1.4,.35],[1.4,.35]].forEach(([lx,lz])=>{
     const leg=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.8,8),new THREE.MeshStandardMaterial({color:0x3a1a08}));
     leg.position.set(lx,.41,lz);g.add(leg);
   });
-  // Chairs
+  // Sillas
   const cM=new THREE.MeshStandardMaterial({color:0x1a3a60,roughness:.8});
   [[-1.6,.48,.75],[0,.48,.75],[1.6,.48,.75],[-1.6,.48,-.75],[0,.48,-.75],[1.6,.48,-.75]].forEach(([cx,cy,cz])=>{
     const seat=new THREE.Mesh(new THREE.BoxGeometry(.42,.07,.42),cM);seat.position.set(cx,cy,cz);g.add(seat);
     const back=new THREE.Mesh(new THREE.BoxGeometry(.42,.42,.05),cM);back.position.set(cx,cy+.24,cz+(cz>0?.2:-.2));g.add(back);
   });
+
+  // ── CERVEZAS EN LA MESA ──────────────────────────────
+  const beerM=new THREE.MeshStandardMaterial({color:0xd4a017,roughness:.3,metalness:.5,transparent:true,opacity:.85});
+  const beerFoamM=new THREE.MeshStandardMaterial({color:0xfff8e7,roughness:.8});
+  const beerPositions=[[-1.1,.9,-.15],[-.2,.9,.2],[.8,.9,-.1],[1.3,.9,.18],[-0.5,.9,-.2]];
+  beerPositions.forEach((pos,i)=>{
+    const bottle=new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,.28,10),beerM);
+    bottle.position.set(...pos);g.add(bottle);
+    const foam=new THREE.Mesh(new THREE.SphereGeometry(.048,8,4),beerFoamM);
+    foam.position.set(pos[0],pos[1]+.16,pos[2]);g.add(foam);
+    // Burbuja animada encima
+    const bub=new THREE.Mesh(new THREE.SphereGeometry(.025,5,5),new THREE.MeshStandardMaterial({color:0xd4a017,emissive:0xd4a017,emissiveIntensity:.4,transparent:true,opacity:.6}));
+    bub.position.set(pos[0],pos[1]+.25,pos[2]);g.add(bub);
+    BREAK_ANIMS.push({mesh:bub,type:'bubble',phase:i*1.2,baseY:pos[1]+.25});
+  });
+
+  // ── TRABAJADORES SENTADOS EN SALA DE DESCANSO ─────────
+  // Par 1: Rosa y Felipe sentados juntos (se dan besos graciosos)
+  const workerColors=[0xff88cc,0xffaa44,0x3388ff];
+  const seated=[
+    {x:-1.0,z:.6, color:0xff88cc, name:'Rosa'},  // mirando a Felipe
+    {x:-1.0,z:-.5,color:0xffaa44, name:'Felipe'}, // mirando a Rosa
+    {x:1.2, z:.0, color:0x3388ff, name:'Marco'},  // solo, botella en mano
+  ];
+  const seatedGroups=[];
+  seated.forEach((sw,si)=>{
+    const sg=new THREE.Group();
+    const sbM=new THREE.MeshStandardMaterial({color:sw.color,roughness:.8});
+    // Cuerpo sentado (más bajo)
+    const body=new THREE.Mesh(new THREE.BoxGeometry(.38,.55,.22),sbM);body.position.y=.95;sg.add(body);
+    // Piernas dobladas
+    const legM=new THREE.MeshStandardMaterial({color:0x1a2530});
+    const legL=new THREE.Mesh(new THREE.BoxGeometry(.13,.12,.35),legM);legL.position.set(-.1,.68,.22);sg.add(legL);
+    const legR=new THREE.Mesh(new THREE.BoxGeometry(.13,.12,.35),legM);legR.position.set(.1,.68,.22);sg.add(legR);
+    // Cabeza
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.18,8,6),new THREE.MeshStandardMaterial({color:0xffcba4,roughness:.9}));
+    head.position.y=1.52;sg.add(head);
+    // Hardhat en mesa (lo quitaron para descansar)
+    const hat=new THREE.Mesh(new THREE.SphereGeometry(.19,8,5,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0xffd700,roughness:.6}));
+    hat.position.set(sw.x>0?-.3:.3,.88,.0);sg.add(hat);
+    // Brazo con botella (solo Marco)
+    if(si===2){
+      const arm=new THREE.Mesh(new THREE.CylinderGeometry(.04,.035,.35,6),sbM);
+      arm.rotation.z=-.9;arm.position.set(.22,1.1,.0);sg.add(arm);
+      const beerHand=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,.22,8),beerM);
+      beerHand.position.set(.44,1.0,.0);sg.add(beerHand);
+    }
+    // Corazón flotante para la pareja (Rosa y Felipe)
+    if(si<2){
+      const heart=new THREE.Mesh(new THREE.SphereGeometry(.06,6,6),new THREE.MeshStandardMaterial({color:0xff3366,emissive:0xff3366,emissiveIntensity:.8}));
+      heart.position.set(si===0?.3:-.3,1.9,.0);sg.add(heart);
+      BREAK_ANIMS.push({mesh:heart,type:'heart',phase:si*.8,baseY:1.9});
+    }
+    sg.position.set(sw.x,.0,sw.z);
+    // Rosa mira a Felipe, Felipe a Rosa
+    if(si===0) sg.rotation.y=Math.PI*.5;
+    else if(si===1) sg.rotation.y=-Math.PI*.5;
+    else sg.rotation.y=Math.PI;
+    g.add(sg);
+    seatedGroups.push({group:sg,type:si<2?'couple':'drinker',phase:si*2.1});
+    BREAK_ANIMS.push({mesh:sg,type:si<2?'couple':'drinker',phase:si*2.1});
+  });
+
+  // ── CARTEL GRACIOSO EN LA PARED ───────────────────────
+  const sign1=makeLabel('🍺 ZONA LIBRE DE ESTRÉS','#ffaa44',4,.45);sign1.position.set(2,4.5,5.75);g.add(sign1);
+  const sign2=makeLabel('ISO 9001 no aplica aquí','#5a7a8a',3.2,.35);sign2.position.set(2,4.0,5.75);g.add(sign2);
+
+  // Mesa auxiliar con snacks
+  const snkTbl=new THREE.Mesh(new THREE.BoxGeometry(1.2,.06,.6),new THREE.MeshStandardMaterial({color:0x4a2a0a,roughness:.8}));
+  snkTbl.position.set(-4,.82,0);g.add(snkTbl);
+  // Bolsa de papas fritas
+  const bag=new THREE.Mesh(new THREE.CylinderGeometry(.1,.12,.22,6),new THREE.MeshStandardMaterial({color:0xff8800,roughness:.7}));
+  bag.position.set(-4.2,.96,.0);g.add(bag);
+  // Más cervezas en la mesa auxiliar
+  [0,.28,-.25].forEach((bz,bi)=>{
+    const b2=new THREE.Mesh(new THREE.CylinderGeometry(.04,.055,.25,8),beerM);
+    b2.position.set(-3.8,.9,bz);g.add(b2);
+    const f2=new THREE.Mesh(new THREE.SphereGeometry(.042,6,3),beerFoamM);
+    f2.position.set(-3.8,1.04,bz);g.add(f2);
+  });
+
   // Coffee machine
   const cof=new THREE.Mesh(new THREE.BoxGeometry(.38,.68,.28),new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.5,metalness:.4}));
   cof.position.set(-4.8,1.24,.5);g.add(cof);
   const cofLed=new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),new THREE.MeshStandardMaterial({color:0x00ff44,emissive:0x00ff44,emissiveIntensity:1}));
   cofLed.position.set(-4.8,1.54,.63);g.add(cofLed);
-  // Microwave
-  const mw=new THREE.Mesh(new THREE.BoxGeometry(.5,.35,.38),new THREE.MeshStandardMaterial({color:0x222222,roughness:.6,metalness:.3}));
-  mw.position.set(-4.8,1.73,.5);g.add(mw);
+
   // Sign
-  const lbl=makeLabel('SALA DE DESCANSO','#00e5cc',3.5,.5);lbl.position.set(0,5.8,5.6);g.add(lbl);
-  // Warm light
-  const wl=new THREE.PointLight(0xffaa44,2.0,14);wl.position.set(0,3.8,0);g.add(wl);
-  g.position.set(-55,0,18);scene.add(g);
-  IOBJ.push({id:'break_room',pos:new THREE.Vector3(-55,0,18),range:5,hint:'[E] Sala de Descanso — Zona de Bienestar'});
-  IOBJ.push({id:'coffee_machine',pos:new THREE.Vector3(-59.8,0,18.5),range:3.5,hint:'[E] Tomar café ☕ (+5 pts)'});
+  const lbl=makeLabel('☕ SALA DE DESCANSO','#00e5cc',3.5,.5);lbl.position.set(0,5.8,5.6);g.add(lbl);
+  // Warm amber light
+  const wl=new THREE.PointLight(0xffaa44,2.2,16);wl.position.set(0,3.8,0);g.add(wl);
+  // Beer glow (warm orange tint)
+  const beerGlow=new THREE.PointLight(0xd4a017,.6,6);beerGlow.position.set(0,.9,0);g.add(beerGlow);
+  BREAK_ANIMS.push({mesh:beerGlow,type:'beerglow',phase:0});
+
+  g.position.set(BX,0,BZ);scene.add(g);
+  IOBJ.push({id:'break_room',pos:new THREE.Vector3(BX,0,BZ),range:6,hint:'[E] Sala de Descanso 🍺 — Ver al equipo'});
+  IOBJ.push({id:'coffee_machine',pos:new THREE.Vector3(BX-4.8,0,BZ+.5),range:3.5,hint:'[E] Tomar café ☕ (+5 pts)'});
 })();
 
+// Animar sala de descanso cada frame
+function animateBreakRoom(t){
+  BREAK_ANIMS.forEach(a=>{
+    if(!a.mesh) return;
+    if(a.type==='bubble'){
+      // Burbujas de cerveza suben y desaparecen
+      a.mesh.position.y=a.baseY+Math.sin(t*2+a.phase)*.08;
+      a.mesh.material.opacity=.3+Math.sin(t*3+a.phase)*.3;
+    } else if(a.type==='heart'){
+      // Corazones flotan hacia arriba entre la pareja
+      a.mesh.position.y=a.baseY+Math.sin(t*1.5+a.phase)*.15;
+      a.mesh.scale.setScalar(.8+Math.sin(t*2.5+a.phase)*.3);
+      a.mesh.material.emissiveIntensity=.5+Math.sin(t*2+a.phase)*.5;
+    } else if(a.type==='couple'){
+      // Rosa y Felipe se balancean suavemente hacia el otro
+      a.mesh.rotation.z=Math.sin(t*0.8+a.phase)*.06;
+      a.mesh.position.y=Math.sin(t*1.2+a.phase)*.015;
+    } else if(a.type==='drinker'){
+      // Marco levanta la botella periódicamente
+      a.mesh.rotation.z=Math.sin(t*0.6+a.phase)*.08;
+      a.mesh.children.forEach((c,ci)=>{if(ci===8)c.rotation.z=-.9+Math.sin(t*0.5)*.4;});
+    } else if(a.type==='beerglow'){
+      // Pulsación cálida de la luz de cerveza
+      a.mesh.intensity=.4+Math.sin(t*1.8)*.3;
+    }
+  });
+}
+
 function openBreakRoom(){
-  openModal('Sala de Descanso','Zona de Bienestar — TechDent Chile S.A.',`
-  <div class="two-col" style="margin-bottom:12px">
+  // Contar cuántos trabajadores están en sala de descanso
+  const inBreak=workerData?workerData.filter(wd=>wd.state==='break').length:0;
+  openModal('🍺 Sala de Descanso','Zona de Bienestar — TechDent Chile S.A.',`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
     <div>
-      <div class="ibox gold"><strong>☕ Estado del equipo</strong><br>
-      ${WORKERS.map(w=>`${w.icon} ${w.name}: <span style="color:${w.mood>60?'#79df4b':w.mood>35?'#efb41c':'#ff5050'}">${w.mood}% ánimo</span>`).join('<br>')}</div>
+      <div class="ibox gold" style="margin-bottom:8px"><strong>🍺 Ambiente actual</strong><br>
+        ${inBreak>0?`${inBreak} trabajadores descansando ahora`:'La sala está tranquila.'}<br>
+        <span style="font-size:9px;color:#5a7a8a">Rosa y Felipe siempre aparecen aquí en pausa 👀</span>
+      </div>
+      <span style="font-size:9px;color:#efb41c;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Estado del equipo</span>
+      ${WORKERS.slice(0,5).map(w=>`<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span>${w.icon} ${w.name}</span>
+        <span style="color:${w.mood>60?'#79df4b':w.mood>35?'#efb41c':'#ff5050'}">${w.mood}%</span>
+      </div>`).join('')}
     </div>
     <div>
-      <span class="sec-l">Actividades</span>
-      <button class="btn-p" style="width:100%;margin-bottom:7px;text-align:left" onclick="brCoffee()">☕ Tomar café — +5 pts enfoque</button>
-      <button class="btn-s" style="width:100%;margin-bottom:7px;text-align:left" onclick="brMeeting()">📋 Reunión de pie 5 min — Coordinar equipo</button>
-      <button class="btn-g" style="width:100%;text-align:left" onclick="brLunch()">🍱 Pedir almuerzo al equipo<br><span style="font-size:10px">-$150.000 CLP · +15 ánimo masivo</span></button>
+      <span style="font-size:9px;color:#efb41c;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Actividades</span>
+      <button class="btn-p" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brCoffee()">☕ Tomar café<span style="color:#79df4b;font-size:9px;float:right">+5 pts</span></button>
+      <button class="btn-s" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brMeeting()">📋 Reunión de pie<span style="color:#00e5cc;font-size:9px;float:right">+3% efic.</span></button>
+      <button class="btn-g" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brLunch()">🍱 Pedir almuerzo<span style="color:#efb41c;font-size:9px;float:right">-$150k · +15 ánimo</span></button>
+      <button class="btn-s" style="width:100%;text-align:left;padding:8px 12px;border-color:rgba(212,160,23,.4);color:#d4a017" onclick="brCerveza()">🍺 Ronda de cervezas<span style="font-size:9px;float:right;color:#efb41c">-$50k · +10 ánimo</span></button>
     </div>
   </div>
-  <div class="ibox" style="font-size:10px">💡 Las pausas activas y espacios de bienestar son parte de la gestión de personas ISO 9001 — aumentan productividad y reducen ausentismo.</div>
+  <div class="ibox" style="font-size:9px">💡 <strong>ISO 9001 + Bienestar:</strong> Las pausas activas aumentan productividad en un 12%. El estrés crónico en planta reduce la calidad del proceso.</div>
   `,[{label:'Cerrar',fn:closeModal}]);
 }
-window.brCoffee=function(){addScore(5);notify('info','☕ Café','Te sientes más enfocado.');};
-window.brMeeting=function(){applyKPI({efficiency:3,morale:5});addScore(30);notify('success','Reunión de Pie','Coordinación mejorada. +3% eficiencia.');closeModal();};
-window.brLunch=function(){if(!spendBudget(150000,'Almuerzo del equipo'))return;WORKERS.forEach(w=>w.mood=Math.min(100,w.mood+15));updateWorkerMoods();applyKPI({morale:8});addScore(80);notify('success','🍱 Almuerzo compartido','Todo el equipo almorzó juntos. Moral masiva +15%.');closeModal();};
+window.brCoffee=function(){addScore(5);notify('info','☕ Café','Te sientes más enfocado. +5 pts.');closeModal();};
+window.brMeeting=function(){applyKPI({efficiency:3,morale:5});addScore(30);notify('success','📋 Reunión de Pie','Coordinación mejorada. Eficiencia +3%.');closeModal();};
+window.brLunch=function(){if(!spendBudget(150000,'Almuerzo del equipo'))return;WORKERS.forEach(w=>w.mood=Math.min(100,w.mood+15));updateWorkerMoods();applyKPI({morale:8});addScore(80);notify('success','🍱 Almuerzo compartido','Todo el equipo almorzó juntos. Moral +15%.');closeModal();};
+window.brCerveza=function(){
+  if(!spendBudget(50000,'Ronda de cervezas'))return;
+  WORKERS.forEach(w=>w.mood=Math.min(100,w.mood+10));
+  updateWorkerMoods();applyKPI({morale:5});addScore(35);
+  // Chiste gracioso aleatorio
+  const chistes=[
+    '"Marco intentó hacer un brindis y tiró su cerveza encima del jefe de turno. Todos fingieron que no pasó nada."',
+    '"Felipe juraba que podía tomar 3 cervezas y seguir calibrando la llenadora. Le quitaron las llaves."',
+    '"Rosa y Felipe desaparecieron 10 minutos. Volvieron diciendo que fueron al baño... al mismo tiempo."',
+    '"El bodeguero Bruno ganó el karaoke con una versión de reguetón del Manual ISO 9001."',
+  ];
+  const c=chistes[Math.floor(Math.random()*chistes.length)];
+  notify('success','🍺 ¡Salud!','Moral del equipo +10%.');
+  showStory('Sala de Descanso · TechDent',c);
+  closeModal();
+};
 
 // ═══════════════════════════════════════════════════════
 // CHEMICAL HAZARD ZONE
@@ -2815,33 +3059,47 @@ window.runChemSafety=function(){if(!spendBudget(500000,'Capacitación seguridad 
 
 // Chemical process data (Sebastián's expertise)
 const SEB_CHEM_DATA={
-  mezclado:{
-    title:'Mezclado de Ingredientes',
-    temp:'72°C ± 2°C',time:'45 min',
-    notes:'Fase crítica: agregar fluoruro de sodio DESPUÉS que el agua esté a temperatura. Jamás mezclar en frío — precipita y pierde eficacia.',
-    kpi:'Defectos -8% si T° correcta',
-    concept:'Proceso por lotes (Batch Process): producción de volumen fijo con parámetros controlados antes de avanzar.'
+  alm:{
+    title:'Almacén Materia Prima',
+    param:'Pureza agua: ≥99% · HR almacén <60%',time:'Rotación: máx 12 días',
+    notes:'El fluoruro de sodio debe almacenarse bajo 25°C. Lotes fuera de especificación generan defectos desde el origen. Exige COA (certificado de análisis) al proveedor.',
+    kpi:'Defectos de origen -8% con proveedor certificado',
+    concept:'Gestión de proveedores ISO 9001 cl.8.4: evaluar y controlar la calidad de los insumos externos.'
   },
-  homogeneizacion:{
-    title:'Homogeneización',
-    temp:'68°C ± 3°C',time:'30 min',
-    notes:'Velocidad de agitación: 1.200–1.800 RPM. Si superas 2.000 RPM introduce burbujas de aire → defectos visuales en el tubo.',
-    kpi:'Calidad +12% dentro de rango',
-    concept:'Control de proceso: la variable crítica (RPM) debe estar dentro de límites de control estadístico (LIE/LSE).'
+  mez:{
+    title:'Tanque Mezclador',
+    param:'Temperatura: 72°C ± 2°C',time:'Duración lote: 45 min',
+    notes:'CRÍTICO: agregar NaF solo cuando el agua llegue a 65°C — bajo esa temperatura precipita. RPM del agitador: 180-220. Sobre 280 RPM incorpora burbujas de aire visibles en el tubo final.',
+    kpi:'Homogeneidad +15% · Defectos -8% dentro del rango',
+    concept:'Proceso batch: volumen fijo con parámetros controlados antes de avanzar a la siguiente etapa.'
   },
-  llenado:{
-    title:'Llenado de Tubos',
-    temp:'Ambiente: 22°C',time:'0.8 seg/tubo',
-    notes:'Tolerancia de llenado: 90g ± 1.5g (límite ISO). Calibrar boquillas cada 200 tubos. Temperatura de pasta: 38°C para fluidez óptima.',
+  hom:{
+    title:'Homogeneizador',
+    param:'Presión: 210 bar ± 20 bar',time:'3 ciclos de 8 min',
+    notes:'Variable crítica: PRESIÓN (bar), no temperatura. Rango operativo 150-250 bar. Bajo 150 bar la pasta queda con grumos visibles. Sobre 280 bar puede dañar las membranas del equipo.',
+    kpi:'Textura uniforme · Calidad +12% en rango óptimo',
+    concept:'Control estadístico (CEP): presión dentro de LIE=150 bar y LSE=250 bar. Monitorear con carta de control Shewhart.'
+  },
+  lle:{
+    title:'Llenadora de Tubos',
+    param:'Volumen: 75 ml ± 0.5 ml',time:'0.8 seg/tubo = 75 ud/min',
+    notes:'Variable crítica: VOLUMEN (ml), no temperatura. Calibrar boquillas cada 200 tubos. La pasta debe estar a 38°C para fluidez óptima — bajo 32°C se atasca la boquilla.',
     kpi:'Defectos por peso -15% con calibración regular',
-    concept:'Takt time en llenado: 0.8s/tubo = capacidad 4.500 tubos/hora a línea completa.'
+    concept:'Takt time: 0.8s/tubo. Si la demanda pide más, agregar segunda boquilla — no aumentar presión.'
   },
-  sellado:{
-    title:'Sellado de Tubos',
-    temp:'180°C ± 5°C',time:'1.2 seg',
-    notes:'Presión de sello: 3.2 bar. Si T° baja → sellado incompleto (fuga). Si T° alta → quema el plástico y cambia color.',
-    kpi:'Calidad +10% con T° exacta',
-    concept:'Control estadístico de proceso (CEP): monitorear variable (T°) con cartas de control Shewhart para detectar derivas.'
+  sel:{
+    title:'Selladora / Crimping',
+    param:'Temperatura mordaza: 180°C ± 5°C',time:'1.2 seg de contacto',
+    notes:'Aquí sí aplica temperatura: mordaza calefaccionada. Bajo 175°C → sello incompleto → fuga. Sobre 185°C → quema el aluminio y cambia el color. Presión de crimping: 3.2 bar.',
+    kpi:'Fugas -90% · Calidad +10% con T° exacta',
+    concept:'Poka-yoke: sensor térmico con alarma automática si T° sale de rango. Control en fuente, no detección tardía.'
+  },
+  emp:{
+    title:'Empacadora',
+    param:'Velocidad: 180 cajas/hr ± 20',time:'Film retráctil: 140°C',
+    notes:'Variable crítica: VELOCIDAD (cajas/hr). Sobre 220 cajas/hr el film no sella bien y los tubos se golpean entre sí. Temperatura del film: 140°C ± 10°C.',
+    kpi:'Daño de empaque -12% bajo 200 cajas/hr',
+    concept:'Balance de línea: la empacadora debe correr al ritmo de la llenadora. Sobrepasar su capacidad genera cuello de botella.'
   },
 };
 
@@ -2853,8 +3111,7 @@ function openSebastianRocha(forceKey){
   if(!forceKey)_sebTopicIdx++;
   const topic=SEB_CHEM_DATA[key]||SEB_CHEM_DATA[topics[0]];
   // Find the relevant machine for this topic
-  const machMap={mezclado:'mez',homogeneizacion:'hom',llenado:'lle',sellado:'sel'};
-  const machId=machMap[key];
+  const machId=m.id; // keys ahora coinciden con IDs de máquinas
   const curMach=machId&&MACHINE_DATA[machId];
   openModal('🧪 Sebastián Rocha · Jefe Procesos Químicos','TechDent Chile — Experto en Formulación',`
   <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
@@ -2871,12 +3128,12 @@ function openSebastianRocha(forceKey){
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
     <div class="ibox" style="margin:0;text-align:center">
-      <div style="font-size:9px;color:#5a7a8a">TEMPERATURA ÓPTIMA</div>
-      <div style="font-size:22px;font-weight:900;color:#ff6600">${topic.temp}</div>
+      <div style="font-size:9px;color:#5a7a8a">VARIABLE CRÍTICA</div>
+      <div style="font-size:14px;font-weight:900;color:#ff6600">${topic.param}</div>
     </div>
     <div class="ibox" style="margin:0;text-align:center">
-      <div style="font-size:9px;color:#5a7a8a">TIEMPO</div>
-      <div style="font-size:22px;font-weight:900;color:#45d4ff">${topic.time}</div>
+      <div style="font-size:9px;color:#5a7a8a">TIEMPO / CICLO</div>
+      <div style="font-size:14px;font-weight:900;color:#45d4ff">${topic.time}</div>
     </div>
   </div>
   <div style="font-size:11px;color:#b0c8d0;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:6px;margin-bottom:8px">${topic.notes}</div>
@@ -3152,10 +3409,7 @@ function finishMission(m){
     const nextM=pool[mIdx];
     if(nextM) showStory('Sistema · Siguiente Misión',`"Misión ${mIdx+1}/${mTotal}: ${nextM.title}" — ${nextM.story.split('\n')[0]}`);
   }
-  // Trigger the single alien/Juan story event after the first mission completes
-  if(G.missionsDone.size===1&&!alienEventFired){
-    setTimeout(()=>triggerAlienEvent(),10000);
-  }
+  // Aliens solo aparecen en la batalla final con Juan — NO durante las misiones normales
   setTimeout(()=>checkMissionTrigger(m.id),2500);
 }
 function launchTask(m){
@@ -3656,23 +3910,20 @@ window.baSlide=function(key,val){
 };
 window.confirmInvest=function(){
   closeModal();
-  // Apply KPI effects proportionally
+  // Auto-apply KPIs con distribución balanceada por defecto
   INVEST_CATS.forEach(cat=>{
-    const ratio=_inv[cat.k]/cat.max;
+    const ratio=(_inv[cat.k]>0?_inv[cat.k]:cat.max*0.2)/cat.max;
     Object.entries(cat.kpi).forEach(([k,v])=>{
       if(k==='defectRate') G.kpi.defectRate=Math.max(0,G.kpi.defectRate+v*ratio);
       else G.kpi[k]=Math.min(100,(G.kpi[k]||0)+v*ratio);
     });
-    if(cat.k==='seguridad'&&_inv.seguridad>=400000){G.chemTrainingDone=true;chemIncidentFlag=true;}
+    if(cat.k==='seguridad'&&(_inv.seguridad||cat.max*.2)>=400000){G.chemTrainingDone=true;chemIncidentFlag=true;}
   });
-  G.budget=800000; // remaining operating budget (higher to allow hiring)
+  G.budget=800000;
   updateBudgetHUD();updateHUD();addScore(150);
-  notify('success','¡Inversión Realizada!','Los recursos están asignados. Tienes $800.000 CLP de presupuesto operativo. Úsalo con cuidado.');
-  miguelSay(`"Sabia decisión. Yo mismo hice algo similar cuando fundé TechDent en 1998. La clave está en el equilibrio entre maquinaria y personas."`);
-  startTutorial();
+  // Directo a jugar — sin más ventanas
   startOperatingCosts();
-  // Lanzar primera misión inmediatamente (sin espera de 3 minutos)
-  setTimeout(()=>checkMissionTrigger('strategy'),3500);
+  setTimeout(()=>checkMissionTrigger('strategy'),2000);
 };
 
 // ═══════════════════════════════════════════════════════
@@ -4052,7 +4303,13 @@ function hitJuan(){
 }
 
 function confrontJuan(){
-  // Final boss — options depend on strategy and game progress
+  // Activar aliens como guardianes de Juan al entrar en confrontación
+  if(!alienEventFired){
+    alienEventFired=true;
+    spawnAlien();
+    setTimeout(()=>spawnAlien(),3000);
+    notify('bad','👾 ¡Guardias alienígenas de Juan!','Juan trajo refuerzos. ¡Elimínalos con [G] o CLIC antes de confrontarlo! Apunta con el mouse y dispara.');
+  }
   const costScore=G.processUpgrades.size + (G.routeOptimized?1:0) + (G.providerNegotiated?1:0);
   const diffScore=(G.strategy==='diff'?2:0) + G.inspections.length + G.hiredCandidates.size;
   const moralOk=G.kpi.morale>70;
@@ -4153,21 +4410,141 @@ window.jsBattle=function(opcion){
 // ═══════════════════════════════════════════════════════
 // BUDGET — OPERATING COSTS & ALERTS
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// ECONOMÍA REAL — Producción → Bodega → Ventas → Presupuesto
+// ═══════════════════════════════════════════════════════
+const PROD={
+  warehouse:0, totalProduced:0, totalSold:0, revenue:0,
+  defectLost:0, unitCost:680, unitPrice:1850,
+  inProcess:{alm:0,mez:0,hom:0,lle:0,sel:0,emp:0},
+  pendingOrders:[
+    {id:'OP-2847',client:'Cruz Verde',    qty:1200,delivered:0,deadline:'27/08'},
+    {id:'OP-2848',client:'Salco Bond',    qty:800, delivered:0,deadline:'28/08'},
+    {id:'OP-2849',client:'Walmart Chile', qty:2400,delivered:0,deadline:'29/08'},
+    {id:'OP-2850',client:'Líder',         qty:600, delivered:0,deadline:'01/09'},
+  ],
+  history:[], _accumulator:0, _histTick:0,
+};
+
+// HUD de bodega fijo en pantalla
+(function buildWarehouseHUD(){
+  const d=document.createElement('div');
+  d.id='wh-hud';
+  d.style.cssText='position:fixed;bottom:14px;right:14px;background:rgba(8,18,28,.93);border:1px solid rgba(121,223,75,.4);border-radius:8px;padding:8px 14px;z-index:90;display:none;min-width:175px';
+  d.innerHTML=`<div style="font-size:8px;color:#5a7a8a;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">📦 Bodega TechDent</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+      <span id="wh-stock" style="font-size:20px;font-weight:900;color:#79df4b">0</span>
+      <span style="font-size:9px;color:#5a7a8a">unidades</span>
+    </div>
+    <div style="font-size:9px;color:#efb41c;margin-bottom:5px" id="wh-rate">Iniciando producción...</div>
+    <button onclick="openSellModal()" style="width:100%;background:linear-gradient(90deg,#3a8a20,#79df4b);color:#020c01;border:none;border-radius:5px;padding:5px 0;font-size:10px;font-weight:900;cursor:pointer">💰 VENDER LOTE →</button>`;
+  document.body.appendChild(d);
+})();
+
+function updateWarehouseHUD(){
+  const el=document.getElementById('wh-stock');
+  const re=document.getElementById('wh-rate');
+  if(el) el.textContent=PROD.warehouse.toLocaleString();
+  const rate=Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1));
+  if(re) re.textContent=`+${rate} ud/min · ${PROD.defectLost} rechazadas`;
+}
+
+// Tick de producción — se llama en el loop principal
+let _prodTick=0;
+function updateProduction(dt){
+  if(G.phase!=='playing'||!G.strategy||!G.lineRunning) return;
+  _prodTick++;
+  const ratePerSec=(G.kpi.efficiency*0.01)*(G.lineSpeed||1)*0.8;
+  PROD._accumulator+=ratePerSec*dt;
+  if(PROD._accumulator>=1){
+    const batch=Math.floor(PROD._accumulator);
+    PROD._accumulator-=batch;
+    const defectRate=G.kpi.defectRate/100;
+    const defects=Math.round(batch*defectRate);
+    const good=batch-defects;
+    PROD.warehouse+=good;
+    PROD.defectLost+=defects;
+    PROD.totalProduced+=batch;
+    Object.keys(PROD.inProcess).forEach((s,i)=>{
+      PROD.inProcess[s]=Math.round(good*(1-i*0.08)*(0.9+Math.random()*0.2));
+    });
+    PROD._histTick+=dt;
+    if(PROD._histTick>=30){
+      PROD._histTick=0;
+      PROD.history.push({t:Math.round((G._elapsedMin||0)),stock:PROD.warehouse,produced:PROD.totalProduced,q:Math.round(G.kpi.quality),e:Math.round(G.kpi.efficiency)});
+      if(PROD.history.length>20) PROD.history.shift();
+    }
+    // Pequeño costo operativo por producción
+    G.budget=Math.max(0,G.budget-Math.round(good*PROD.unitCost*0.00008));
+  }
+  if(_prodTick%120===0){
+    updateWarehouseHUD();
+    updateBudgetHUD();
+    if(G.budget<100000&&G.budget>0) notify('warn','💸 Presupuesto bajo','Vende producto en bodega para generar ingresos. Presiona el botón verde.');
+    if(G.budget===0){applyKPI({efficiency:-5,quality:-3});notify('bad','❌ Sin presupuesto','¡Vende stock urgente!');}
+  }
+  G._elapsedMin=(G._elapsedMin||0)+dt/60;
+}
+
+// Modal de venta
+window.openSellModal=function(){
+  const price=PROD.unitPrice;
+  const lotes=[
+    {qty:50,  label:'Lote mínimo',  client:'Farmacia local'},
+    {qty:200, label:'Lote pequeño', client:'Salco Bond'},
+    {qty:800, label:'Lote mediano', client:'Cruz Verde'},
+    {qty:2000,label:'Lote grande',  client:'Walmart Chile'},
+  ].filter(l=>l.qty<=PROD.warehouse);
+  openModal('💰 Vender Producto Terminado','Bodega → Cliente · TechDent Chile',`
+  <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(121,223,75,.07);border-radius:8px;margin-bottom:12px">
+    <div><div style="font-size:9px;color:#5a7a8a">Stock disponible</div>
+      <div style="font-size:24px;font-weight:900;color:#79df4b">${PROD.warehouse.toLocaleString()} ud</div></div>
+    <div style="text-align:right"><div style="font-size:9px;color:#5a7a8a">Precio unitario</div>
+      <div style="font-size:16px;font-weight:700;color:#efb41c">$${price.toLocaleString()} CLP</div></div>
+  </div>
+  ${PROD.warehouse<50?'<div class="ibox red">Necesitas al menos 50 unidades para vender un lote. Espera que la línea produzca más.</div>':
+  `<div style="display:flex;flex-direction:column;gap:6px">
+    ${lotes.map(l=>`<button onclick="sellLote(${l.qty})" style="display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:rgba(255,255,255,.03);border:1px solid rgba(121,223,75,.2);border-radius:7px;color:#e0e8ef;cursor:pointer;width:100%">
+      <div style="text-align:left"><div style="font-size:11px;font-weight:700">${l.label} — ${l.qty.toLocaleString()} ud</div>
+      <div style="font-size:9px;color:#5a7a8a">Cliente: ${l.client}</div></div>
+      <div style="font-size:13px;font-weight:900;color:#79df4b">+$${(l.qty*price).toLocaleString()}</div>
+    </button>`).join('')}
+    <button onclick="sellLote(${PROD.warehouse})" style="display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:rgba(121,223,75,.1);border:1px solid #79df4b66;border-radius:7px;color:#e0e8ef;cursor:pointer;width:100%">
+      <div style="text-align:left"><div style="font-size:11px;font-weight:700">⭐ Vender TODO — ${PROD.warehouse.toLocaleString()} ud</div></div>
+      <div style="font-size:13px;font-weight:900;color:#79df4b">+$${(PROD.warehouse*price).toLocaleString()}</div>
+    </button>
+  </div>`}
+  <div class="ibox" style="margin-top:10px;font-size:10px">💡 <strong>Concepto ICI:</strong> Gestión de inventarios — vender en lotes grandes mejora el margen por transporte pero aumenta riesgo de ruptura de stock.</div>
+  `,[{label:'Cancelar',fn:closeModal}]);
+};
+
+window.sellLote=function(qty){
+  qty=Math.min(qty,PROD.warehouse);
+  if(qty<=0){notify('warn','Sin stock','No hay unidades para vender. Espera producción.');return;}
+  const income=qty*PROD.unitPrice;
+  PROD.warehouse-=qty; PROD.totalSold+=qty; PROD.revenue+=income;
+  G.budget+=income;
+  updateBudgetHUD(); updateWarehouseHUD();
+  addScore(Math.round(qty/10));
+  PROD.pendingOrders.forEach(o=>{if(o.delivered<o.qty) o.delivered=Math.min(o.qty,o.delivered+qty);});
+  closeModal();
+  notify('success',`💰 Venta: ${qty.toLocaleString()} ud`,`+$${income.toLocaleString()} CLP · Saldo: $${G.budget.toLocaleString()}`);
+  showStory('Sistema · Ventas TechDent',`"${qty} unidades FrescoMax® despachadas. Ingresos: $${income.toLocaleString()} CLP."`);
+};
+
 function startOperatingCosts(){
-  // Every 4 minutes deduct operating cost (energy, maintenance)
+  document.getElementById('wh-hud').style.display='block';
+  // Precio según estrategia
+  if(G.strategy==='diff') PROD.unitPrice=2500; else PROD.unitPrice=1500;
+  // Presupuesto inicial acotado — obliga a vender para costear operaciones
+  G.budget=400000;
+  updateBudgetHUD();
+  // Costo fijo cada 3 minutos (arriendo, energía, sueldos base)
   setInterval(()=>{
     if(G.phase!=='playing'||!G.strategy) return;
-    const cost=75000;
-    G.budget=Math.max(0,G.budget-cost);
+    G.budget=Math.max(0,G.budget-40000);
     updateBudgetHUD();
-    if(G.budget<200000) notify('warn','⚠ Presupuesto bajo','$'+G.budget.toLocaleString()+' CLP restantes. Completa misiones para obtener más fondos.');
-    if(G.budget===0) applyKPI({efficiency:-8,quality:-5});
-  },240000);
-  // Budget drain warning at critical threshold
-  setInterval(()=>{
-    if(G.phase!=='playing'||G.budget>150000) return;
-    miguelSay(`"¡Cuidado! El presupuesto operativo está crítico. Sin fondos, la planta no puede operar con normalidad. Completa misiones para generar ingresos."`,'warn');
-  },120000);
+  },180000);
 }
 
 // Machine upgrade cost helper (called from openMachine dialogs)
@@ -4474,6 +4851,8 @@ function animate(time){
   updateJuan(dt);
   updatePathDots();
   advanceTutorial();
+  animateBreakRoom(tSec);
+  updateProduction(dt);
 
   // Roof movement (G.onRoof bypasses normal move())
   if(G.onRoof&&!G.showingModal){
