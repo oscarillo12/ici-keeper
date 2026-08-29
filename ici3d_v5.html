@@ -3211,28 +3211,59 @@ window.sebInvestigate=function(){
   if(_sebInvestigating) return;
   _sebInvestigating=true; _sebInvestResult=null;
   closeModal();
-  notify('info','🔬 Sebastián investiga','Sebastián fue al laboratorio. Regresa en 45 segundos con resultados.');
-  showStory('Sebastián Rocha . Laboratorio','"Voy a revisar las últimas muestras y los datos del proceso. Esto puede mejorar nuestra eficiencia o calidad notablemente."');
+  notify('info','🔬 Sebastián investiga','Sebastián fue al laboratorio. Regresa en 45 segundos.');
+  showStory('Sebastián Rocha . Laboratorio','"Voy a revisar las muestras y los datos del proceso. Tengo una propuesta de mejora."');
+  // Propuestas con costo real — algunas requieren calidad minima o presupuesto
   const results=[
-    {txt:'Detecté que la temperatura de sellado varía ±12°C en la tarde — la máquina necesita recalibración. Si la ajustas al rango exacto, los defectos de sello bajan un 15%.',kpi:{defectRate:-5,quality:8}},
-    {txt:'El tiempo de mezclado actual es 48 min cuando el óptimo es 42 min. Reducirlo aumenta throughput sin afectar calidad — ahorramos 14% de energía.',kpi:{efficiency:12,quality:4}},
-    {txt:'La boquilla #3 de la llenadora tiene desgaste asimétrico. Reemplazarla costaría $80k pero salvaría 200 tubos defectuosos por hora.',kpi:{defectRate:-8,quality:6}},
-    {txt:'El sílice abrasivo del lote actual tiene granulometría inconsistente. Recomiendo cambiar de proveedor o tamizar antes de mezclar.',kpi:{quality:10,defectRate:-4}},
+    {txt:'La Selladora varía ±12°C — necesita recalibración. Costo: $120.000 CLP. Con calidad actual lo podemos hacer ya.',
+     kpi:{defectRate:-5,quality:8},cost:120000,minQuality:0,machine:'sel'},
+    {txt:'La boquilla de la Llenadora tiene desgaste. Reemplazarla cuesta $80.000 y salva 200 tubos/hr.',
+     kpi:{defectRate:-6,quality:6},cost:80000,minQuality:0,machine:'lle'},
+    {txt:'El sílice tiene granulometría inconsistente. Cambio de proveedor: $150.000. Pero necesitamos calidad sobre 70% para que valga la pena.',
+     kpi:{quality:10,defectRate:-4},cost:150000,minQuality:70,machine:'alm'},
+    {txt:'PROPUESTA GRANDE: Sensor digital de caudal en la Llenadora. $800.000 CLP. Defectos por peso bajan 20%. Necesitas calidad sobre 72% y ese presupuesto en caja.',
+     kpi:{defectRate:-8,quality:12,efficiency:10},cost:800000,minQuality:72,isBig:true,machine:'lle'},
   ];
   const r=results[Math.floor(Math.random()*results.length)];
   setTimeout(()=>{
     _sebInvestigating=false; _sebInvestResult=r.txt;
-    _sebPendingKPI=r.kpi;
-    notify('success','🔬 Sebastián volvió','¡Tiene resultados! Vuelve a hablar con él para implementar la mejora.');
-    showStory('Sebastián Rocha','"¡Jefe! Encontré algo importante. Ven a verlo."');
+    _sebPendingKPI=r.kpi; _sebPendingCost=r.cost;
+    _sebPendingMinQ=r.minQuality||0; _sebIsBig=r.isBig||false;
+    _sebMachine=r.machine||'lle';
+    notify('success','🔬 Sebastián volvió','Tiene una propuesta. Habla con él en zona Calidad (este).'); 
+    showStory('Sebastián Rocha','"Jefe, encontré algo. Ven a verlo — es importante para la rentabilidad."');
+    setWaypoint('sebastian_rocha');
   },45000);
 };
-let _sebPendingKPI=null;
+let _sebPendingKPI=null, _sebPendingCost=0, _sebPendingMinQ=0, _sebIsBig=false, _sebMachine='lle';
+
 window.applySebResult=function(){
-  if(!_sebPendingKPI) return;
-  applyKPI(_sebPendingKPI);addScore(180);
-  _sebInvestResult=null; _sebPendingKPI=null;
-  notify('success','✓ Mejora implementada','Sebastián aplicó los cambios. ¡KPIs mejorados!');
+  if(!_sebPendingKPI){closeModal();return;}
+  const cost=_sebPendingCost||0;
+  const minQ=_sebPendingMinQ||0;
+  // Chequeo de calidad mínima
+  if(G.kpi.quality<minQ){
+    notify('warn','Calidad insuficiente',`Necesitas calidad sobre ${minQ}%. Ahora tienes ${Math.round(G.kpi.quality)}%. Mejora las inspecciones primero.`);
+    showStory('Sebastián Rocha',`"Todavía no. Con ${Math.round(G.kpi.quality)}% de calidad la inversión no se justifica. Instala más puntos de control, sube la calidad a ${minQ}% y vuelve."`);
+    return;
+  }
+  // Chequeo de presupuesto
+  if(G.budget<cost){
+    const falta=cost-G.budget;
+    notify('warn','Presupuesto insuficiente',`Faltan $${falta.toLocaleString()} CLP. Vende stock en bodega para financiar.`);
+    showStory('Sebastián Rocha',`"El presupuesto no alcanza aún. Necesitas $${cost.toLocaleString()} — tienes $${G.budget.toLocaleString()}. Vende el stock de bodega y vuelve."`);
+    return;
+  }
+  // Aplicar mejora
+  G.budget-=cost; updateBudgetHUD();
+  applyKPI(_sebPendingKPI); addScore(180);
+  triggerMachineGlow(_sebMachine, 0x45d4ff);
+  const concepto=_sebIsBig
+    ?'"Esta es la diferencia entre una empresa que sobrevive y una que lidera. El CAPEX bien invertido multiplica la eficiencia."'
+    :'"Pequeñas mejoras continuas — eso es la filosofía Kaizen. Cada ajuste cuenta."';
+  showStory('Sebastián Rocha . Procesos Industriales',concepto);
+  notify('success','✓ Mejora implementada',`$${cost.toLocaleString()} invertidos. KPIs mejorados. Sebastián dice: Kaizen.`);
+  _sebInvestResult=null; _sebPendingKPI=null; _sebPendingCost=0;
   closeModal();
 };
 
@@ -4176,13 +4207,41 @@ let waypointTarget=null;
 const ZONE_POSITIONS={
   decision:{x:0,z:26},valentina:{x:-43,z:8},trainer:{x:-43,z:-2},quality:{x:45,z:5},logistics:{x:20,z:-38},
   estop_btn:{x:-55,z:0},fk_enter:{x:8,z:-28},break_room:{x:-55,z:18},chem_zone:{x:42,z:-18},
-  ladder_up:{x:61,z:8},
+  ladder_up:{x:61,z:8},sebastian_rocha:{x:38,z:-14},
 };
 
-const MISSION_WAYPOINTS={
-  d1:'mez',d2:'lle',d3:'mez',d4:'valentina',
-  c1:'mez',c2:'estop_btn',c3:'fk_enter',c4:'lle',c5:'valentina',
-};
+// ── HUD Brújula de misión (GTA-style arriba al centro) ──
+(function buildMissionCompass(){
+  const d=document.createElement('div');
+  d.id='mission-compass';
+  d.style.cssText='position:fixed;top:46px;left:50%;transform:translateX(-50%);z-index:60;display:none;flex-direction:column;align-items:center;gap:2px;pointer-events:none';
+  d.innerHTML=`
+    <div id="mc-arrow" style="font-size:28px;line-height:1;filter:drop-shadow(0 0 6px #efb41c);transition:transform .1s">⬆</div>
+    <div id="mc-label" style="font-size:9px;font-weight:700;color:#efb41c;letter-spacing:1px;text-shadow:0 0 8px #efb41c88;background:rgba(3,10,16,.7);padding:2px 8px;border-radius:4px"></div>
+    <div id="mc-dist" style="font-size:8px;color:#00e5cc"></div>
+  `;
+  document.body.appendChild(d);
+})();
+
+function updateCompassHUD(){
+  const compass=document.getElementById('mission-compass');
+  if(!compass||!waypointTarget||G.phase!=='playing'){if(compass)compass.style.display='none';return;}
+  const tPos=ZONE_POSITIONS[waypointTarget]||MACHINES.find(m=>m.id===waypointTarget);
+  if(!tPos){compass.style.display='none';return;}
+  compass.style.display='flex';
+  // Angle from player to target, relative to camera yaw
+  const dx=tPos.x-camera.position.x;
+  const dz=(tPos.z||0)-camera.position.z;
+  const worldAngle=Math.atan2(dx,-dz); // world angle to target
+  const relAngle=worldAngle-yaw;        // relative to where player is looking
+  const deg=relAngle*(180/Math.PI);
+  document.getElementById('mc-arrow').style.transform=`rotate(${deg}deg)`;
+  const dist=Math.round(Math.hypot(dx,dz));
+  const name=waypointTarget in ZONE_POSITIONS?waypointTarget.toUpperCase():MACHINES.find(m=>m.id===waypointTarget)?.name||waypointTarget;
+  document.getElementById('mc-label').textContent=name;
+  document.getElementById('mc-dist').textContent=dist+'m';
+  if(dist<4){compass.style.display='none';}
+}
 
 function setWaypoint(zoneKey){
   waypointTarget=zoneKey;
@@ -5064,6 +5123,7 @@ function animate(time){
   updateMoto(dt);
   updateWaypoint(dt);
   updateMiguelGhost(dt);
+  updateCompassHUD();
   updateAliens(dt);
   updateJuan(dt);
   updatePathDots();
