@@ -9,7 +9,7 @@
 body{background:#000;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;color:#e0e8ef}
 canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 
-/* ── SPLASH ─────────────────────────────────────────── */
+/* -- SPLASH ------------------------------------------- */
 #splash{position:fixed;inset:0;z-index:200;background:radial-gradient(ellipse at 50% 55%,#031018 0%,#010608 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
 .sp-eyebrow{font-size:10px;letter-spacing:5px;color:#3a7a9b;text-transform:uppercase}
 .sp-company{font-size:clamp(12px,1.6vw,16px);color:#efb41c;letter-spacing:4px;font-weight:700}
@@ -24,7 +24,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 #btn-start{background:linear-gradient(90deg,#efb41c,#c47a00);color:#040c12;border:none;padding:13px 46px;border-radius:8px;font-size:15px;font-weight:900;cursor:pointer;letter-spacing:2px;transition:.2s;margin-top:4px}
 #btn-start:hover{transform:scale(1.05);box-shadow:0 0 32px rgba(239,180,28,.45)}
 
-/* ── HUD ──────────────────────────────────────────────── */
+/* -- HUD ------------------------------------------------ */
 #hud{position:fixed;top:0;left:0;right:0;z-index:50;pointer-events:none;display:none}
 #hud-bar{background:rgba(3,10,16,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.055);padding:6px 14px;display:flex;align-items:center;gap:12px}
 #hud-zone{font-size:10px;color:#00e5cc;font-weight:700;letter-spacing:2px;min-width:190px}
@@ -38,13 +38,13 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 #hud-score{font-size:12px;color:#efb41c;font-weight:800;white-space:nowrap}
 .strategy-chip{display:inline-block;padding:3px 10px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:1px;display:none}
 
-/* ── ZONE SIDEBAR ─────────────────────────────────────── */
+/* -- ZONE SIDEBAR --------------------------------------- */
 #zi{position:fixed;left:11px;top:50px;z-index:50;display:none;flex-direction:column;gap:5px;pointer-events:none}
 .zico{width:34px;height:34px;border-radius:6px;border:1.5px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;transition:.3s;opacity:.25;text-align:center;line-height:1.1}
 .zico.on{opacity:1;border-color:rgba(255,255,255,.3)}
 .zico.done{opacity:1;filter:drop-shadow(0 0 5px currentColor)}
 
-/* ── CROSSHAIR (COD-style) ────────────────────────────── */
+/* -- CROSSHAIR (COD-style) ------------------------------ */
 #xh{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;pointer-events:none;display:none;width:40px;height:40px}
 .xh-bar{position:absolute;background:rgba(255,255,255,.9);border-radius:1px;transition:all .12s ease;box-shadow:0 0 3px rgba(0,0,0,.8)}
 .xh-t{width:2px;height:10px;left:19px;top:2px}
@@ -68,14 +68,14 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 @keyframes camShake{0%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,2px)}100%{transform:translate(0,0)}}
 .shaking{animation:camShake .12s ease}
 
-/* ── HINT ─────────────────────────────────────────────── */
+/* -- HINT ----------------------------------------------- */
 #hint{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:60;background:rgba(3,10,16,.94);border:1px solid rgba(0,229,204,.3);border-radius:20px;padding:6px 16px;font-size:12px;color:#00e5cc;display:none;pointer-events:none;white-space:nowrap}
 #hint.insp{border-color:rgba(239,180,28,.5);color:#efb41c}
 
-/* ── MINIMAP ──────────────────────────────────────────── */
+/* -- MINIMAP -------------------------------------------- */
 #mm{position:fixed;top:50px;right:11px;z-index:50;border:1px solid rgba(255,255,255,.08);border-radius:6px;background:rgba(3,10,16,.88);display:none;cursor:default}
 
-/* ── INSPECTION BANNER ────────────────────────────────── */
+/* -- INSPECTION BANNER ---------------------------------- */
 #insp-banner{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:70;background:rgba(239,180,28,.12);border:1px solid rgba(239,180,28,.45);border-radius:20px;padding:6px 18px;font-size:11px;color:#efb41c;display:none;pointer-events:none;letter-spacing:1px;white-space:nowrap}
 #insp-counter{position:fixed;right:11px;top:240px;z-index:50;background:rgba(3,10,16,.92);border:1px solid rgba(239,180,28,.25);border-radius:8px;padding:10px 13px;display:none;font-size:11px;color:#efb41c;min-width:130px}
 #insp-counter .ic-t{font-size:8px;color:#5a7a8a;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
@@ -83,13 +83,13 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 .ic-dot{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(239,180,28,.25)}
 .ic-dot.used{background:#efb41c;border-color:#efb41c}
 
-/* ── STORY CARD ───────────────────────────────────────── */
+/* -- STORY CARD ----------------------------------------- */
 #story-card{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:80;background:rgba(3,10,16,.96);border:1px solid rgba(239,180,28,.3);border-left:3px solid #efb41c;border-radius:8px;padding:13px 16px;max-width:480px;width:90vw;display:none;pointer-events:none;animation:scIn .4s ease}
 @keyframes scIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 #story-card .sc-from{font-size:9px;color:#efb41c;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 #story-card .sc-text{font-size:13px;color:#c8d8e0;line-height:1.65}
 
-/* ── MODAL ────────────────────────────────────────────── */
+/* -- MODAL ---------------------------------------------- */
 #mg{position:fixed;inset:0;z-index:100;background:rgba(3,10,16,.95);display:none;align-items:center;justify-content:center}
 #mg.open{display:flex}
 #mgbox{background:#070f18;border:1px solid rgba(255,255,255,.09);border-radius:12px;width:min(1000px,96vw);max-height:91vh;overflow-y:auto;display:flex;flex-direction:column;animation:mgIn .3s ease}
@@ -103,7 +103,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 #mg-score-val{color:#efb41c;font-weight:700}
 #mg-btns{display:flex;gap:8px}
 
-/* ── WMS ──────────────────────────────────────────────── */
+/* -- WMS ------------------------------------------------ */
 #wms{position:fixed;inset:0;z-index:100;background:rgba(2,7,12,.98);display:none;flex-direction:column}
 #wms.open{display:flex}
 #wms-bar{background:#030a10;border-bottom:1px solid rgba(0,229,204,.12);padding:9px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0}
@@ -115,7 +115,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 .wms-tab:hover:not(.active){border-color:rgba(255,255,255,.1);color:#8aa0a8}
 #wms-content{flex:1;overflow-y:auto;padding:18px 22px}
 
-/* ── NOTIFICATIONS ────────────────────────────────────── */
+/* -- NOTIFICATIONS -------------------------------------- */
 #notif{position:fixed;bottom:90px;left:11px;z-index:150;display:flex;flex-direction:column-reverse;gap:7px;pointer-events:none;max-width:310px}
 .nc{background:rgba(7,15,24,.96);border:1px solid rgba(0,229,204,.2);border-radius:8px;padding:9px 13px;font-size:12px;animation:ncIn .35s ease;pointer-events:none}
 .nc.success{border-color:rgba(121,223,75,.4)}
@@ -126,10 +126,10 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 .nc-t{font-size:9px;font-weight:700;letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
 .nc-b{color:#7a9aaa;line-height:1.5}
 
-/* ── RESULT ───────────────────────────────────────────── */
+/* -- RESULT --------------------------------------------- */
 #result{position:fixed;inset:0;z-index:300;background:radial-gradient(ellipse at 50% 30%,#041428,#010608);display:none;flex-direction:column;align-items:center;overflow-y:auto;padding:40px 20px}
 
-/* ── SHARED COMPONENTS ────────────────────────────────── */
+/* -- SHARED COMPONENTS ---------------------------------- */
 .btn-p{background:linear-gradient(90deg,#00e5cc,#009988);color:#020c0b;border:none;padding:10px 22px;border-radius:6px;font-weight:800;cursor:pointer;font-size:12px;transition:.2s}
 .btn-p:hover{transform:scale(1.03);box-shadow:0 0 16px rgba(0,229,204,.35)}
 .btn-g{background:linear-gradient(90deg,#efb41c,#c47a00);color:#040c02;border:none;padding:10px 22px;border-radius:6px;font-weight:800;cursor:pointer;font-size:12px;transition:.2s}
@@ -219,11 +219,11 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 .progress-fill.gold{background:linear-gradient(90deg,#c47a00,#efb41c)}
 .progress-fill.red{background:linear-gradient(90deg,#cc2200,#ff5050)}
 .progress-fill.blue{background:linear-gradient(90deg,#1a60cc,#45d4ff)}
-/* ── WORKER / ECONOMY SYSTEMS ── */
+/* -- WORKER / ECONOMY SYSTEMS -- */
 #budget-hud{position:fixed;top:44px;right:16px;background:rgba(10,26,40,.92);border:1px solid #efb41c55;border-radius:7px;padding:5px 12px;z-index:90;display:none}
 #budget-hud .bh-lbl{font-size:8px;color:#5a7a8a;text-transform:uppercase;letter-spacing:.8px;display:block}
 #budget-val{font-size:15px;font-weight:900;color:#efb41c}
-/* ── MISSION TRACKER (GTA-style) ── */
+/* -- MISSION TRACKER (GTA-style) -- */
 #mission-tracker{position:fixed;left:11px;top:248px;z-index:55;width:220px;background:rgba(3,10,16,.92);border:1px solid rgba(239,180,28,.35);border-left:3px solid #efb41c;border-radius:8px;padding:10px 12px;display:none;pointer-events:auto;cursor:pointer;transition:.2s}
 #mission-tracker:hover{border-color:rgba(239,180,28,.6);box-shadow:0 0 12px rgba(239,180,28,.15)}
 #mt-label{font-size:7px;color:#5a7a8a;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
@@ -267,10 +267,10 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 
 <!-- SPLASH -->
 <div id="splash">
-  <div class="sp-eyebrow">Universidad Mayor · Ingeniería Civil Industrial</div>
+  <div class="sp-eyebrow">Universidad Mayor . Ingeniería Civil Industrial</div>
   <div class="sp-company">TechDent Chile S.A. — Pasta de Dientes FrescoMax®</div>
   <div class="sp-title">ICI KEEPER</div>
-  <div class="sp-sub">Simulador Industrial v5 · Planta de Manufactura</div>
+  <div class="sp-sub">Simulador Industrial v5 . Planta de Manufactura</div>
   <div class="sp-desc">Toma el control total de la planta. Fabrica pasta de dientes, implementa ISO 9001, define la estrategia competitiva y optimiza cada área mientras la producción corre.</div>
   <div class="sp-role"><strong>Tu rol:</strong> Acabas de ser contratado como <strong>Jefe de Ingeniería Industrial</strong> de TechDent Chile. La línea produce FrescoMax® 24/7. Debes tomar decisiones que afectan todo el sistema.</div>
   <div class="sp-keys">
@@ -347,7 +347,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 </svg>
 <div id="hint"></div>
 <canvas id="mm" width="180" height="180"></canvas>
-<div id="insp-banner">🔍 INSPECCIÓN ACTIVA — [E] junto a máquina para colocar control · [Q] salir</div>
+<div id="insp-banner">🔍 INSPECCIÓN ACTIVA — [E] junto a máquina para colocar control . [Q] salir</div>
 <div id="insp-counter">
   <div class="ic-t">Puntos de Control</div>
   <div id="ic-used">0 / 5 usados</div>
@@ -370,7 +370,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 <!-- WMS -->
 <div id="wms">
   <div id="wms-bar">
-    <div><div class="wms-logo-text">TechDent WMS™</div><span class="wms-ver">Warehouse Management System v3.2 · FrescoMax Production Plant</span></div>
+    <div><div class="wms-logo-text">TechDent WMS™</div><span class="wms-ver">Warehouse Management System v3.2 . FrescoMax Production Plant</span></div>
     <div class="wms-tabs">
       <div class="wms-tab active" onclick="wmsTab('dash')">Dashboard</div>
       <div class="wms-tab" onclick="wmsTab('inv')">Inventario</div>
@@ -391,7 +391,7 @@ canvas#c{display:block;width:100vw;height:100vh;cursor:none}
 <!-- Emergency stop overlay -->
 <div id="estop-hud"><div id="estop-inner"><div style="font-size:13px;color:#ffaaaa;margin-bottom:10px">⚠ ALERTA CRÍTICA — CORRE AL BOTÓN ROJO (pared oeste)</div><span id="es-timer">18</span><div style="font-size:10px;color:#ff9999;margin-top:8px">segundos para llegar</div></div></div>
 <!-- Vehicle HUD -->
-<div id="vhud"><div id="vhud-row"><span>🚜 <strong>MONTACARGAS</strong></span><span id="vh-speed">Vel: 0 km/h</span><span id="vh-fork">Horquillas: 0cm</span></div><div id="vh-pallets" style="font-size:10px;color:#c8d6e5;margin-top:6px;text-align:center">Pallets: 0/3</div><div style="font-size:9px;color:#5a7a8a;margin-top:4px">W/S=Avanzar · A/D=Girar · Espacio=Subir · Shift=Bajar · F=Salir</div></div>
+<div id="vhud"><div id="vhud-row"><span>🚜 <strong>MONTACARGAS</strong></span><span id="vh-speed">Vel: 0 km/h</span><span id="vh-fork">Horquillas: 0cm</span></div><div id="vh-pallets" style="font-size:10px;color:#c8d6e5;margin-top:6px;text-align:center">Pallets: 0/3</div><div style="font-size:9px;color:#5a7a8a;margin-top:4px">W/S=Avanzar . A/D=Girar . Espacio=Subir . Shift=Bajar . F=Salir</div></div>
 <!-- Tutorial card -->
 <div id="tutor" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:95;background:rgba(10,22,34,.93);border:1.5px solid #00e5cc55;border-radius:10px;padding:12px 18px;width:380px;max-width:95vw;text-align:center">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
@@ -659,7 +659,7 @@ function makeLabel(text, color, w=3, h=0.6){
   return m;
 }
 
-// ── Machine 1: Raw Material Storage ──────────────────
+// -- Machine 1: Raw Material Storage ------------------
 function buildAlmacen(x){
   const g=new THREE.Group();
   // Storage tanks (3 ingredient tanks)
@@ -688,7 +688,7 @@ function buildAlmacen(x){
 }
 buildAlmacen(-36);
 
-// ── Machine 2: Mixing Tank ────────────────────────────
+// -- Machine 2: Mixing Tank ----------------------------
 function buildMixer(x){
   const g=new THREE.Group();
   // Main tank body
@@ -733,7 +733,7 @@ function buildMixer(x){
 }
 buildMixer(-24);
 
-// ── Machine 3: Homogenizer ────────────────────────────
+// -- Machine 3: Homogenizer ----------------------------
 function buildHomo(x){
   const g=new THREE.Group();
   // Cabinet
@@ -766,7 +766,7 @@ function buildHomo(x){
 }
 buildHomo(-12);
 
-// ── Machine 4: Tube Filling Station ──────────────────
+// -- Machine 4: Tube Filling Station ------------------
 function buildFiller(x){
   const g=new THREE.Group();
   // Frame (4 uprights)
@@ -803,7 +803,7 @@ function buildFiller(x){
 }
 buildFiller(0);
 
-// ── Machine 5: Sealing / Crimping ────────────────────
+// -- Machine 5: Sealing / Crimping --------------------
 function buildSealer(x){
   const g=new THREE.Group();
   const body=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.2,1.3),mStd(0x3d4450,.6,.4));
@@ -836,7 +836,7 @@ function buildSealer(x){
 }
 buildSealer(12);
 
-// ── Machine 6: Packaging ─────────────────────────────
+// -- Machine 6: Packaging -----------------------------
 function buildPacker(x){
   const g=new THREE.Group();
   const cab=new THREE.Mesh(new THREE.BoxGeometry(3.0,2.8,1.8),mStd(0x3d4450,.6,.4));
@@ -870,7 +870,7 @@ function buildPacker(x){
 }
 buildPacker(24);
 
-// ── Palletizer ────────────────────────────────────────
+// -- Palletizer ----------------------------------------
 {
   const g=new THREE.Group();
   const mast=new THREE.Mesh(new THREE.BoxGeometry(.28,5,.28),mStd(0x3d4450,.6,.5));
@@ -1487,14 +1487,14 @@ window.chooseStrategy=function(s){
     const chip=document.getElementById('strat-chip');
     chip.textContent='🎯 DIFERENCIACIÓN'; chip.style.cssText='display:inline-block;background:rgba(0,229,204,.15);color:#00e5cc;padding:3px 10px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:1px;margin-left:6px';
     notify('success','Estrategia Elegida','Diferenciación seleccionada. Ve a Procesos para agregar la fórmula blanqueadora y a RRHH para contratar el personal adecuado.');
-    showStory('Miguel González · Director','Excelente. Con diferenciación necesitamos mejorar la fórmula. Ve al tanque mezclador para añadir el nuevo ingrediente blanqueador y luego contrata personal capacitado en calidad.');
+    showStory('Miguel González . Director','Excelente. Con diferenciación necesitamos mejorar la fórmula. Ve al tanque mezclador para añadir el nuevo ingrediente blanqueador y luego contrata personal capacitado en calidad.');
   } else {
     applyKPI({efficiency:20,morale:-5,quality:-5,defectRate:2});
     addScore(150);
     const chip=document.getElementById('strat-chip');
     chip.textContent='💰 COSTOS'; chip.style.cssText='display:inline-block;background:rgba(239,180,28,.15);color:#efb41c;padding:3px 10px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:1px;margin-left:6px';
     notify('success','Estrategia Elegida','Liderazgo en costos. Ve a Procesos para aumentar velocidad de línea y a Logística para negociar con proveedores.');
-    showStory('Miguel González · Director','Bien. Para liderazgo en costos necesitamos maximizar la velocidad de la línea. Ve al homogeneizador y la llenadora para ajustar los parámetros de producción.');
+    showStory('Miguel González . Director','Bien. Para liderazgo en costos necesitamos maximizar la velocidad de la línea. Ve al homogeneizador y la llenadora para ajustar los parámetros de producción.');
   }
   // NO abrir budget allocation automáticamente — el jugador ya tiene suficiente info
   // El presupuesto se asigna automáticamente de forma balanceada
@@ -1728,7 +1728,7 @@ function openValentina(){
     <div style="font-size:48px">👩‍💼</div>
     <div>
       <div style="font-size:15px;font-weight:700;color:#c87fff">Valentina Ramos</div>
-      <div style="font-size:11px;color:#5a7a8a;margin-bottom:6px">Gerente de Recursos Humanos · TechDent Chile</div>
+      <div style="font-size:11px;color:#5a7a8a;margin-bottom:6px">Gerente de Recursos Humanos . TechDent Chile</div>
       <div class="ibox" style="margin:0"><strong>"Como parte de la implementación ISO 9001, necesitamos contratar y capacitar a nuestro equipo. El estándar exige que el personal tenga competencia demostrada en sus funciones."</strong><br><br>
       Tenemos <strong>4 candidatos</strong> disponibles. Puedes contratar hasta <strong>2 personas</strong>. Elige en base a sus competencias para el proceso de certificación ISO 9001.</div>
     </div>
@@ -1741,7 +1741,7 @@ function openValentina(){
   </div>
   <span class="sec-l">Ver candidatos → <button class="btn-s" style="font-size:11px;padding:4px 12px" onclick="openCandidates()">Abrir Panel de Candidatos</button></span>
   `;
-  openModal('Recursos Humanos — Valentina Ramos','Gestión de personas · Implementación ISO 9001',body,[
+  openModal('Recursos Humanos — Valentina Ramos','Gestión de personas . Implementación ISO 9001',body,[
     {label:'Ver Candidatos',cls:'btn-p',fn:openCandidates},
     {label:'Ir a Capacitación',cls:'btn-g',fn:openTrainer},
     {label:'Cerrar',fn:closeModal},
@@ -1773,7 +1773,7 @@ function openCandidates(){
   </div>
   <div class="ibox green" style="margin-top:12px"><strong>Recomendación:</strong> Para ISO 9001 prioriza a Diego Torres (certificado) o Ana Muñoz (alta adaptación). Contratar a Sandra suma experiencia operacional.</div>
   `;
-  openModal('Candidatos — Selección de Personal','Elige hasta 2 personas para contratar · Considera competencias ISO 9001',body,[
+  openModal('Candidatos — Selección de Personal','Elige hasta 2 personas para contratar . Considera competencias ISO 9001',body,[
     {label:'Ir a Capacitación',cls:'btn-g',fn:openTrainer},
     {label:'Cerrar',fn:closeModal},
   ]);
@@ -1835,7 +1835,7 @@ function showISOModule(step){
       </div>
     `,[{label:'¡Excelente, a seguir!',cls:'btn-p',fn:closeModal},{label:'Repasar módulos',fn:()=>{isoStep=0;closeModal();setTimeout(()=>showISOModule(0),200);}}]);
     notify('success','ISO 9001 Training','¡Equipo certificado! Calidad y moral del equipo mejoran significativamente.');
-    showStory('Carlos Mendoza · Capacitador','Todo el personal completó los módulos requeridos por ISO 9001 cláusula 7.2. El sistema de gestión de calidad tiene ahora el soporte humano necesario.');
+    showStory('Carlos Mendoza . Capacitador','Todo el personal completó los módulos requeridos por ISO 9001 cláusula 7.2. El sistema de gestión de calidad tiene ahora el soporte humano necesario.');
     // Auto-complete ISO mission if pending
     if(G._isoMissionPending){
       const isoM=G._isoMissionPending;G._isoMissionPending=null;
@@ -1852,7 +1852,7 @@ function showISOModule(step){
     <div style="font-size:44px">👨‍🏫</div>
     <div>
       <div style="font-size:14px;font-weight:700;color:#c87fff">Carlos Mendoza — Capacitador ISO 9001</div>
-      <div style="font-size:10px;color:#5a7a8a">Auditor Interno Certificado · Lead Auditor ISO 9001:2015</div>
+      <div style="font-size:10px;color:#5a7a8a">Auditor Interno Certificado . Lead Auditor ISO 9001:2015</div>
     </div>
   </div>
   <div class="ibox"><strong>Módulo ${step+1}/4: ${mod.title}</strong></div>
@@ -1910,7 +1910,7 @@ function renderQualityTab(){
   let body=tabBar;
 
   if(_qualTab===0){
-    // ── Tab 1: Inspecciones ──
+    // -- Tab 1: Inspecciones --
     const placed=G.inspections.map(i=>i.name).join(', ')||'Ninguno';
     body+=G.inspections.length===0
       ?`<div class="ibox red">Ninguna inspección activa. Presiona <strong>[Q]</strong> → acércate a una máquina → <strong>[E]</strong>.</div>`
@@ -1922,7 +1922,7 @@ function renderQualityTab(){
     </div>`;
 
   } else if(_qualTab===1){
-    // ── Tab 2: Análisis de Defectos útil para tomar decisiones ──
+    // -- Tab 2: Análisis de Defectos útil para tomar decisiones --
     const dr=G.kpi.defectRate;
     const defColor=dr>15?'#ff5050':dr>8?'#efb41c':'#79df4b';
     const defIcon=dr>15?'🔴':dr>8?'🟡':'🟢';
@@ -1971,7 +1971,7 @@ function renderQualityTab(){
     }
 
   } else {
-    // ── Tab 3: Acciones ──
+    // -- Tab 3: Acciones --
     body+=`<div style="display:flex;flex-direction:column;gap:7px">
       <div class="card" style="border-color:${G.providerNegotiated?'rgba(121,223,75,.3)':'rgba(255,80,80,.25)'}">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -1999,10 +1999,10 @@ function renderQualityTab(){
         </div>
       </div>
     </div>
-    <div style="font-size:9px;color:#5a7a8a;margin-top:8px">Puntos disponibles: ${G.MAX_INSP-G.inspections.length}/${G.MAX_INSP} · [Q] para colocar</div>`;
+    <div style="font-size:9px;color:#5a7a8a;margin-top:8px">Puntos disponibles: ${G.MAX_INSP-G.inspections.length}/${G.MAX_INSP} . [Q] para colocar</div>`;
   }
 
-  openModal('🔬 Control de Calidad','TechDent Chile · ISO 9001 · FrescoMax®',body,[{label:'Cerrar',fn:closeModal}]);
+  openModal('🔬 Control de Calidad','TechDent Chile . ISO 9001 . FrescoMax®',body,[{label:'Cerrar',fn:closeModal}]);
 }
 window.renderQualityTab=renderQualityTab;
 
@@ -2071,13 +2071,13 @@ function openLogistics(){
   </div>
   <div class="ibox gold" style="margin-top:12px"><strong>Objetivo:</strong> Reduce el tiempo de despacho optimizando la ruta de los camiones. Actualmente el orden de entregas no está optimizado por distancia, generando 23% de km innecesarios.</div>
   `;
-  openModal('Gestión Logística — TechDent Chile','WMS · ERP · Rutas · Control de Inventario',body,[
+  openModal('Gestión Logística — TechDent Chile','WMS . ERP . Rutas . Control de Inventario',body,[
     {label:'Abrir WMS',cls:'btn-p',fn:openWMS},
     {label:'Cerrar',fn:closeModal}
   ]);
 }
 
-// ── WMS SYSTEM ────────────────────────────────────────
+// -- WMS SYSTEM ----------------------------------------
 window.openWMS=function(){
   closeModal();
   document.getElementById('wms').classList.add('open');
@@ -2149,7 +2149,7 @@ function wmsRenderDash(){
           <div style="height:30px;background:rgba(255,255,255,.04);border-radius:3px;margin:3px 0;display:flex;align-items:flex-end">
             <div style="width:100%;background:${cols[i]};border-radius:3px;height:${Math.min(100,qty/3)}%;min-height:2px"></div>
           </div>
-          <div style="font-size:7px;color:${hasInsp?'#efb41c':'#3a6070'}">${hasInsp?'🔍':'·'}</div>
+          <div style="font-size:7px;color:${hasInsp?'#efb41c':'#3a6070'}">${hasInsp?'🔍':'.'}</div>
         </div>${i<5?`<div style="color:#3a6070;padding-bottom:18px;font-size:11px">→</div>`:''}`;
       }).join('')}
       <div style="color:#3a6070;padding-bottom:18px;font-size:11px">→</div>
@@ -2180,7 +2180,7 @@ function wmsRenderDash(){
       return `<div style="margin-bottom:5px">
         <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
           <span style="color:${done?'#79df4b':'#e0e8ef'}">${o.client} — ${o.qty} ud</span>
-          <span style="color:${done?'#79df4b':'#5a7a8a'}">${done?'✓ Listo':pct+'%'} · ${o.deadline}</span>
+          <span style="color:${done?'#79df4b':'#5a7a8a'}">${done?'✓ Listo':pct+'%'} . ${o.deadline}</span>
         </div>
         <div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px">
           <div style="height:100%;width:${pct}%;background:${done?'#79df4b':'#efb41c'};border-radius:2px;transition:.5s"></div>
@@ -2215,8 +2215,8 @@ function wmsRenderInv(){
     </tbody>
   </table>
   <div class="ibox" style="margin-top:10px;font-size:10px">
-    Producción: <strong style="color:#00e5cc">${Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1))} ud/min</strong> ·
-    Defectos: <strong style="color:#ff5050">${G.kpi.defectRate.toFixed(1)}%</strong> ·
+    Producción: <strong style="color:#00e5cc">${Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1))} ud/min</strong> .
+    Defectos: <strong style="color:#ff5050">${G.kpi.defectRate.toFixed(1)}%</strong> .
     Total producidas: <strong style="color:#79df4b">${PROD.totalProduced.toLocaleString()}</strong>
   </div>
   <button onclick="openSellModal()" class="btn-g" style="margin-top:10px;width:100%">💰 Vender Stock →</button>
@@ -2339,7 +2339,7 @@ function wmsRenderKpi(){
       <div class="progress-bar" style="margin-top:4px"><div class="progress-fill" style="background:${k.color};width:${k.inv?Math.min(100,k.target/Math.max(.1,k.val)*100):Math.min(100,k.val/k.target*100)}%"></div></div>
     </div>`).join('')}
   </div>
-  <div class="ibox"><strong>Estado:</strong> Eficiencia ${Math.round(G.kpi.efficiency)}% · Bodega: ${PROD.warehouse} ud · Defectos: ${G.kpi.defectRate.toFixed(1)}%</div>
+  <div class="ibox"><strong>Estado:</strong> Eficiencia ${Math.round(G.kpi.efficiency)}% . Bodega: ${PROD.warehouse} ud . Defectos: ${G.kpi.defectRate.toFixed(1)}%</div>
   `;
 }
 
@@ -2521,11 +2521,11 @@ function showFinalResult(){
   document.getElementById('result').innerHTML=`
     <div style="width:min(900px,96vw)">
       <div style="text-align:center;margin-bottom:24px">
-        <div style="font-size:11px;color:#3a6070;letter-spacing:4px;margin-bottom:6px">EVALUACIÓN FINAL · TECHDENT CHILE S.A.</div>
+        <div style="font-size:11px;color:#3a6070;letter-spacing:4px;margin-bottom:6px">EVALUACIÓN FINAL . TECHDENT CHILE S.A.</div>
         <h1 style="font-size:clamp(28px,5vw,56px);font-weight:900;background:linear-gradient(90deg,#00e5cc,#efb41c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:8px">ICI KEEPER COMPLETADO</h1>
         <div style="font-size:20px;color:#efb41c;font-weight:800">${rank}</div>
         <div style="font-size:52px;font-weight:900;color:#fff;margin:8px 0">${G.score} pts</div>
-        ${G.strategy?`<div style="font-size:12px;color:#7a9aaa">Estrategia: <strong style="color:${G.strategy==='diff'?'#00e5cc':'#efb41c'}">${G.strategy==='diff'?'🎯 Diferenciación':'💰 Liderazgo en Costos'}</strong> · Juan Seiffert: <strong style="color:${G.juanDefeated?'#79df4b':'#ff5050'}">${G.juanDefeated?'✓ Derrotado':'No confrontado'}</strong></div>`:''}
+        ${G.strategy?`<div style="font-size:12px;color:#7a9aaa">Estrategia: <strong style="color:${G.strategy==='diff'?'#00e5cc':'#efb41c'}">${G.strategy==='diff'?'🎯 Diferenciación':'💰 Liderazgo en Costos'}</strong> . Juan Seiffert: <strong style="color:${G.juanDefeated?'#79df4b':'#ff5050'}">${G.juanDefeated?'✓ Derrotado':'No confrontado'}</strong></div>`:''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         ${[{l:'Calidad',v:kpi.quality,c:'#79df4b'},{l:'Eficiencia',v:kpi.efficiency,c:'#45d4ff'},{l:'Moral',v:kpi.morale,c:'#c87fff'},{l:'Defectos',v:kpi.defectRate,c:'#ff5050',inv:true}].map(k=>`
@@ -2538,7 +2538,7 @@ function showFinalResult(){
         <div class="card">
           <h4 style="margin-bottom:10px;color:#efb41c">📊 Benchmark Final — Posición TechDent</h4>
           <canvas id="final-radar" width="240" height="240"></canvas>
-          <div style="font-size:9px;color:#3a6070;margin-top:6px;text-align:center">🟢 = TechDent inicio · 🔵 = TechDent AHORA · otros = competidores</div>
+          <div style="font-size:9px;color:#3a6070;margin-top:6px;text-align:center">🟢 = TechDent inicio . 🔵 = TechDent AHORA . otros = competidores</div>
         </div>
         <div class="card">
           <h4 style="margin-bottom:8px;color:#efb41c">📋 Resumen Ejecutivo</h4>
@@ -2595,7 +2595,7 @@ Object.assign(G,{
 function spendBudget(amount,label){
   if(G.budget<amount){notify('bad','Presupuesto insuficiente',`Necesitas $${amount.toLocaleString()} CLP. Disponible: $${G.budget.toLocaleString()}.`);return false;}
   G.budget-=amount;updateBudgetHUD();
-  notify('info','Gasto registrado',`${label} — -$${amount.toLocaleString()} CLP · Saldo: $${G.budget.toLocaleString()}`);
+  notify('info','Gasto registrado',`${label} — -$${amount.toLocaleString()} CLP . Saldo: $${G.budget.toLocaleString()}`);
   return true;
 }
 function updateBudgetHUD(){const el=document.getElementById('budget-val');if(el)el.textContent='$'+G.budget.toLocaleString()+' CLP';}
@@ -2646,7 +2646,7 @@ WORKERS.forEach((w,wi)=>{
   const mLight=new THREE.PointLight(0x79df4b,.6,2.5);mLight.position.y=2.7;g.add(mLight);
   g.position.set(w.x,0,w.z);scene.add(g);
   // Register as interactable
-  IOBJ.push({id:'worker_'+wi,pos:new THREE.Vector3(w.x,0,w.z),range:3.2,hint:`[E] Hablar con ${w.name} · [R] Empujar (GTA)`,workerIdx:wi});
+  IOBJ.push({id:'worker_'+wi,pos:new THREE.Vector3(w.x,0,w.z),range:3.2,hint:`[E] Hablar con ${w.name} . [R] Empujar (GTA)`,workerIdx:wi});
   workerMeshes.push({group:g,bubble,mLight,head});
   workerData.push({state:'working',homeX:w.x,homeZ:w.z,targetX:w.x,targetZ:w.z,stateTimer:15+Math.random()*40,incentiveCooldown:0,praiseUsed:false});
 });
@@ -2715,16 +2715,16 @@ function triggerChemIncident(w,wi){
   applyKPI({morale:-30,efficiency:-20,quality:-10});
   G.budget=Math.max(0,G.budget-1500000);updateBudgetHUD();
   addScore(-300);
-  notify('bad','⚠ INCIDENTE CRÍTICO',`${w.name} fue expuesto a químicos peligrosos. Multa: $1.500.000 · Moral: -30%.`);
-  showStory('Miguel González · Director',`"${w.name} está en el hospital. Debíamos tener la capacitación de seguridad y las barreras instaladas. Multa de $1.500.000 CLP por incumplimiento Ley 16.744."`);
-  setTimeout(()=>openModal('⚠ Incidente Grave — Ley 16.744','Seguridad Química · Acción Inmediata Requerida',`
+  notify('bad','⚠ INCIDENTE CRÍTICO',`${w.name} fue expuesto a químicos peligrosos. Multa: $1.500.000 . Moral: -30%.`);
+  showStory('Miguel González . Director',`"${w.name} está en el hospital. Debíamos tener la capacitación de seguridad y las barreras instaladas. Multa de $1.500.000 CLP por incumplimiento Ley 16.744."`);
+  setTimeout(()=>openModal('⚠ Incidente Grave — Ley 16.744','Seguridad Química . Acción Inmediata Requerida',`
     <div class="ibox red"><strong>INCIDENTE:</strong> ${w.name} (${w.role}) expuesto a vapores de NaF sin EPP. Estatus: Hospitalizado.</div>
     <div class="ibox"><strong>Consecuencias:</strong><br>• Multa: $1.500.000 CLP<br>• Suspensión parcial de producción<br>• Score: -300 pts</div>
     <div class="ibox gold"><strong>Prevención:</strong><br>1. Realiza la <em>Capacitación de Seguridad</em> con Carlos (zona RRHH)<br>2. Instala <em>barreras de protección</em> en la zona química (interactúa con los barriles)</div>
   `,[{label:'Entendido',cls:'btn-danger',fn:closeModal}]),3200);
 }
 
-// ── WORKER INTERACTION MODAL ─────────────────────────────
+// -- WORKER INTERACTION MODAL -----------------------------
 // Track per-worker social cooldowns and respect level
 const WORKER_SOCIAL={};
 WORKERS.forEach((w,i)=>{WORKER_SOCIAL[i]={footballCd:0,barCd:0,respectLoss:0};});
@@ -2746,9 +2746,9 @@ function openWorkerModal(idx){
   <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
     <div style="font-size:44px">${w.icon}</div>
     <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:${w.hue}">${w.name} · ${w.role}</div>
+      <div style="font-size:13px;font-weight:700;color:${w.hue}">${w.name} . ${w.role}</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-        <div style="background:${mc}20;border:1px solid ${mc};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:${mc}">${ml} · ${w.mood}%</div>
+        <div style="background:${mc}20;border:1px solid ${mc};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:${mc}">${ml} . ${w.mood}%</div>
         ${ws.respectLoss>0?`<div style="font-size:9px;color:#ff5050">⚠ Respeto -${ws.respectLoss*15}%</div>`:''}
       </div>
     </div>
@@ -2757,12 +2757,12 @@ function openWorkerModal(idx){
   ${respWarn}
   <div class="ibox gold" style="font-size:12px;font-style:italic;margin-bottom:10px">${funnyQuote}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
-    <button class="btn-s" style="padding:10px;text-align:left" onclick="wChat(${idx})">💬 Conversar<br><span style="font-size:9px;color:#79df4b">+5 ánimo · GRATIS</span></button>
-    <button class="btn-s" style="padding:10px;text-align:left" onclick="wPraise(${idx})" ${wd.praiseUsed?'disabled':''}>⭐ Reconocer<br><span style="font-size:9px;color:#c87fff">+10 ánimo ${wd.praiseUsed?'· usado':''}</span></button>
-    <button class="${G.budget>=200000&&!wd.incentiveCooldown?'btn-p':'btn-s'}" style="padding:10px;text-align:left" onclick="wIncentive(${idx})" ${wd.incentiveCooldown>0?'disabled':''}>💰 Bono<br><span style="font-size:9px;color:#efb41c">-$200k · +25 ánimo${wd.incentiveCooldown>0?' · espera':''}</span></button>
-    <button class="btn-s" style="padding:10px;text-align:left;border-color:rgba(0,229,204,.3)" onclick="wFootball(${idx})" ${ws.footballCd>0?'disabled':''}>⚽ Partido de Fútbol<br><span style="font-size:9px;color:#00e5cc">+20 ánimo · ${ws.footballCd>0?'descansando':'¡Disponible!'}</span></button>
+    <button class="btn-s" style="padding:10px;text-align:left" onclick="wChat(${idx})">💬 Conversar<br><span style="font-size:9px;color:#79df4b">+5 ánimo . GRATIS</span></button>
+    <button class="btn-s" style="padding:10px;text-align:left" onclick="wPraise(${idx})" ${wd.praiseUsed?'disabled':''}>⭐ Reconocer<br><span style="font-size:9px;color:#c87fff">+10 ánimo ${wd.praiseUsed?'. usado':''}</span></button>
+    <button class="${G.budget>=200000&&!wd.incentiveCooldown?'btn-p':'btn-s'}" style="padding:10px;text-align:left" onclick="wIncentive(${idx})" ${wd.incentiveCooldown>0?'disabled':''}>💰 Bono<br><span style="font-size:9px;color:#efb41c">-$200k . +25 ánimo${wd.incentiveCooldown>0?' . espera':''}</span></button>
+    <button class="btn-s" style="padding:10px;text-align:left;border-color:rgba(0,229,204,.3)" onclick="wFootball(${idx})" ${ws.footballCd>0?'disabled':''}>⚽ Partido de Fútbol<br><span style="font-size:9px;color:#00e5cc">+20 ánimo . ${ws.footballCd>0?'descansando':'¡Disponible!'}</span></button>
     <button class="btn-s" style="padding:10px;text-align:left;border-color:rgba(239,180,28,.3);${ws.barCd>0||ws.respectLoss>=3?'opacity:.5':''}" onclick="wBar(${idx})" ${ws.barCd>0||ws.respectLoss>=3?'disabled':''}>🍺 Salir a tomar<br><span style="font-size:9px;color:#efb41c">${ws.respectLoss>=3?'Ya perdiste respeto':ws.barCd>0?'en cooldown':'¡Después del turno!'}</span></button>
-    <button class="btn-danger" style="padding:10px;text-align:left" onclick="wHit(${idx})">👊 Agresión<br><span style="font-size:9px">-$500k · ADVERTENCIA</span></button>
+    <button class="btn-danger" style="padding:10px;text-align:left" onclick="wHit(${idx})">👊 Agresión<br><span style="font-size:9px">-$500k . ADVERTENCIA</span></button>
   </div>`,[{label:'Cerrar',fn:closeModal}]);
 }
 
@@ -2832,7 +2832,7 @@ window.wHit=function(idx){
   G.budget=Math.max(0,G.budget-500000);updateBudgetHUD();
   applyKPI({morale:-15,efficiency:-8});updateWorkerMoods();addScore(-200);closeModal();
   notify('bad','⚠ ADVERTENCIA RR.HH. #'+G.hrWarnings,'Agresión registrada. Multa $500.000. Moral: -15%. Advertencia '+G.hrWarnings+' de 2.');
-  showStory('Valentina Ramos · RRHH','"Esto es completamente inaceptable. '+w.name+' ha interpuesto queja formal. Una segunda agresión implica despido inmediato."');
+  showStory('Valentina Ramos . RRHH','"Esto es completamente inaceptable. '+w.name+' ha interpuesto queja formal. Una segunda agresión implica despido inmediato."');
   if(G.hrWarnings>=2){
     setTimeout(()=>{const r=document.getElementById('result');r.style.display='flex';r.innerHTML='<div style="text-align:center;padding:60px 30px"><div style="font-size:80px">😔</div><h1 style="color:#ff5050;font-size:42px;margin:16px 0">DESPEDIDO</h1><p style="color:#7a9aaa;font-size:15px">Dos agresiones laborales registradas. TechDent Chile terminó tu contrato por justa causa. La empresa mantiene sus valores.</p><button class="btn-s" style="margin-top:24px" onclick="location.reload()">↺ Volver a Intentar</button></div>';},2500);
   }
@@ -2867,7 +2867,7 @@ const BREAK_ANIMS=[]; // objetos animados en la sala
     const back=new THREE.Mesh(new THREE.BoxGeometry(.42,.42,.05),cM);back.position.set(cx,cy+.24,cz+(cz>0?.2:-.2));g.add(back);
   });
 
-  // ── CERVEZAS EN LA MESA ──────────────────────────────
+  // -- CERVEZAS EN LA MESA ------------------------------
   const beerM=new THREE.MeshStandardMaterial({color:0xd4a017,roughness:.3,metalness:.5,transparent:true,opacity:.85});
   const beerFoamM=new THREE.MeshStandardMaterial({color:0xfff8e7,roughness:.8});
   const beerPositions=[[-1.1,.9,-.15],[-.2,.9,.2],[.8,.9,-.1],[1.3,.9,.18],[-0.5,.9,-.2]];
@@ -2882,7 +2882,7 @@ const BREAK_ANIMS=[]; // objetos animados en la sala
     BREAK_ANIMS.push({mesh:bub,type:'bubble',phase:i*1.2,baseY:pos[1]+.25});
   });
 
-  // ── TRABAJADORES SENTADOS EN SALA DE DESCANSO ─────────
+  // -- TRABAJADORES SENTADOS EN SALA DE DESCANSO ---------
   // Par 1: Rosa y Felipe sentados juntos (se dan besos graciosos)
   const workerColors=[0xff88cc,0xffaa44,0x3388ff];
   const seated=[
@@ -2929,7 +2929,7 @@ const BREAK_ANIMS=[]; // objetos animados en la sala
     BREAK_ANIMS.push({mesh:sg,type:si<2?'couple':'drinker',phase:si*2.1});
   });
 
-  // ── CARTEL GRACIOSO EN LA PARED ───────────────────────
+  // -- CARTEL GRACIOSO EN LA PARED -----------------------
   const sign1=makeLabel('🍺 ZONA LIBRE DE ESTRÉS','#ffaa44',4,.45);sign1.position.set(2,4.5,5.75);g.add(sign1);
   const sign2=makeLabel('ISO 9001 no aplica aquí','#5a7a8a',3.2,.35);sign2.position.set(2,4.0,5.75);g.add(sign2);
 
@@ -3014,8 +3014,8 @@ function openBreakRoom(){
       <span style="font-size:9px;color:#efb41c;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Actividades</span>
       <button class="btn-p" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brCoffee()">☕ Tomar café<span style="color:#79df4b;font-size:9px;float:right">+5 pts</span></button>
       <button class="btn-s" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brMeeting()">📋 Reunión de pie<span style="color:#00e5cc;font-size:9px;float:right">+3% efic.</span></button>
-      <button class="btn-g" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brLunch()">🍱 Pedir almuerzo<span style="color:#efb41c;font-size:9px;float:right">-$150k · +15 ánimo</span></button>
-      <button class="btn-s" style="width:100%;text-align:left;padding:8px 12px;border-color:rgba(212,160,23,.4);color:#d4a017" onclick="brCerveza()">🍺 Ronda de cervezas<span style="font-size:9px;float:right;color:#efb41c">-$50k · +10 ánimo</span></button>
+      <button class="btn-g" style="width:100%;margin-bottom:6px;text-align:left;padding:8px 12px" onclick="brLunch()">🍱 Pedir almuerzo<span style="color:#efb41c;font-size:9px;float:right">-$150k . +15 ánimo</span></button>
+      <button class="btn-s" style="width:100%;text-align:left;padding:8px 12px;border-color:rgba(212,160,23,.4);color:#d4a017" onclick="brCerveza()">🍺 Ronda de cervezas<span style="font-size:9px;float:right;color:#efb41c">-$50k . +10 ánimo</span></button>
     </div>
   </div>
   <div class="ibox" style="font-size:9px">💡 <strong>ISO 9001 + Bienestar:</strong> Las pausas activas aumentan productividad en un 12%. El estrés crónico en planta reduce la calidad del proceso.</div>
@@ -3037,7 +3037,7 @@ window.brCerveza=function(){
   ];
   const c=chistes[Math.floor(Math.random()*chistes.length)];
   notify('success','🍺 ¡Salud!','Moral del equipo +10%.');
-  showStory('Sala de Descanso · TechDent',c);
+  showStory('Sala de Descanso . TechDent',c);
   closeModal();
 };
 
@@ -3057,7 +3057,7 @@ window.brCerveza=function(){
     wled.position.set(bx,.93,0);g.add(wled);
     ANIMS.blinkers.push({mesh:wled,phase:bi*.7});
   });
-  const sLbl=makeLabel('⚠ PELIGRO QUÍMICO · EPP OBLIGATORIO','#ff4400',5,.48);sLbl.position.set(0,2.3,0);g.add(sLbl);
+  const sLbl=makeLabel('⚠ PELIGRO QUÍMICO . EPP OBLIGATORIO','#ff4400',5,.48);sLbl.position.set(0,2.3,0);g.add(sLbl);
   const zGlow=new THREE.Mesh(new THREE.PlaneGeometry(7,5),new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff4400,emissiveIntensity:.14,transparent:true,opacity:.32,depthWrite:false}));
   zGlow.rotation.x=-Math.PI/2;zGlow.position.y=.01;g.add(zGlow);
   const hLight=new THREE.PointLight(0xff4400,1.4,9);hLight.position.y=2.2;g.add(hLight);
@@ -3066,7 +3066,7 @@ window.brCerveza=function(){
 })();
 
 function openChemZone(){
-  openModal('⚠ Zona de Químicos Peligrosos','HF · NaF · SiO₂ Abrasivo — Área Restringida',`
+  openModal('⚠ Zona de Químicos Peligrosos','HF . NaF . SiO₂ Abrasivo — Área Restringida',`
   <div class="ibox red"><strong>RIESGO ALTO:</strong> Fluoruro de sodio, ácido fosfórico y sílice abrasivo. Sin EPP puede causar quemaduras químicas graves.</div>
   <div class="two-col" style="margin:12px 0">
     <div>
@@ -3079,7 +3079,7 @@ function openChemZone(){
     <div>
       <span class="sec-l">Acciones</span>
       ${!G.chemBarriersPlaced?`<button class="btn-danger" style="margin-bottom:8px" onclick="installBarriers()">🚧 Instalar Barreras<br><span style="font-size:10px;color:#ff9999">-$300.000 CLP</span></button>`:`<div class="ibox green" style="margin-bottom:8px">✓ Barreras instaladas</div>`}
-      ${!G.chemTrainingDone?`<button class="btn-g" style="width:100%" onclick="runChemSafety()">👷 Capacitación Seguridad<br><span style="font-size:10px">-$500.000 CLP · Ley 16.744</span></button>`:`<div class="ibox green">✓ Equipo capacitado</div>`}
+      ${!G.chemTrainingDone?`<button class="btn-g" style="width:100%" onclick="runChemSafety()">👷 Capacitación Seguridad<br><span style="font-size:10px">-$500.000 CLP . Ley 16.744</span></button>`:`<div class="ibox green">✓ Equipo capacitado</div>`}
     </div>
   </div>
   <div class="ibox gold" style="font-size:10px"><strong>Ley 16.744 Chile:</strong> El empleador debe capacitar al personal sobre riesgos de productos químicos y proveer EPP. Incumplimiento = multa + suspensión.</div>
@@ -3114,7 +3114,7 @@ window.runChemSafety=function(){if(!spendBudget(500000,'Capacitación seguridad 
   const helmM=new THREE.MeshStandardMaterial({color:0xf5c200,roughness:.6,metalness:.1});
   const helm3=new THREE.Mesh(new THREE.SphereGeometry(.225,10,6,[0,Math.PI*2,0,Math.PI*.55]),helmM);helm3.position.set(0,.12,0);head3.add(helm3);
   // Name label
-  const sLbl=makeLabel('🧪 Sebastián Rocha · Jefe Químico','#45d4ff',3.5,.38);sLbl.position.set(0,2.1,0);g.add(sLbl);
+  const sLbl=makeLabel('🧪 Sebastián Rocha . Jefe Químico','#45d4ff',3.5,.38);sLbl.position.set(0,2.1,0);g.add(sLbl);
   // Point light (cool blue = lab)
   const sLight=new THREE.PointLight(0x45d4ff,.7,5);sLight.position.y=2;g.add(sLight);
   g.position.set(38,0,-14);scene.add(g);
@@ -3125,7 +3125,7 @@ window.runChemSafety=function(){if(!spendBudget(500000,'Capacitación seguridad 
 const SEB_CHEM_DATA={
   alm:{
     title:'Almacén Materia Prima',
-    param:'Pureza agua: ≥99% · HR almacén <60%',time:'Rotación: máx 12 días',
+    param:'Pureza agua: ≥99% . HR almacén <60%',time:'Rotación: máx 12 días',
     notes:'El fluoruro de sodio debe almacenarse bajo 25°C. Lotes fuera de especificación generan defectos desde el origen. Exige COA (certificado de análisis) al proveedor.',
     kpi:'Defectos de origen -8% con proveedor certificado',
     concept:'Gestión de proveedores ISO 9001 cl.8.4: evaluar y controlar la calidad de los insumos externos.'
@@ -3134,14 +3134,14 @@ const SEB_CHEM_DATA={
     title:'Tanque Mezclador',
     param:'Temperatura: 72°C ± 2°C',time:'Duración lote: 45 min',
     notes:'CRÍTICO: agregar NaF solo cuando el agua llegue a 65°C — bajo esa temperatura precipita. RPM del agitador: 180-220. Sobre 280 RPM incorpora burbujas de aire visibles en el tubo final.',
-    kpi:'Homogeneidad +15% · Defectos -8% dentro del rango',
+    kpi:'Homogeneidad +15% . Defectos -8% dentro del rango',
     concept:'Proceso batch: volumen fijo con parámetros controlados antes de avanzar a la siguiente etapa.'
   },
   hom:{
     title:'Homogeneizador',
     param:'Presión: 210 bar ± 20 bar',time:'3 ciclos de 8 min',
     notes:'Variable crítica: PRESIÓN (bar), no temperatura. Rango operativo 150-250 bar. Bajo 150 bar la pasta queda con grumos visibles. Sobre 280 bar puede dañar las membranas del equipo.',
-    kpi:'Textura uniforme · Calidad +12% en rango óptimo',
+    kpi:'Textura uniforme . Calidad +12% en rango óptimo',
     concept:'Control estadístico (CEP): presión dentro de LIE=150 bar y LSE=250 bar. Monitorear con carta de control Shewhart.'
   },
   lle:{
@@ -3155,7 +3155,7 @@ const SEB_CHEM_DATA={
     title:'Selladora / Crimping',
     param:'Temperatura mordaza: 180°C ± 5°C',time:'1.2 seg de contacto',
     notes:'Aquí sí aplica temperatura: mordaza calefaccionada. Bajo 175°C → sello incompleto → fuga. Sobre 185°C → quema el aluminio y cambia el color. Presión de crimping: 3.2 bar.',
-    kpi:'Fugas -90% · Calidad +10% con T° exacta',
+    kpi:'Fugas -90% . Calidad +10% con T° exacta',
     concept:'Poka-yoke: sensor térmico con alarma automática si T° sale de rango. Control en fuente, no detección tardía.'
   },
   emp:{
@@ -3177,12 +3177,12 @@ function openSebastianRocha(forceKey){
   // Find the relevant machine for this topic
   const machId=key; // keys ahora coinciden con IDs de máquinas
   const curMach=machId&&MACHINE_DATA[machId];
-  openModal('🧪 Sebastián Rocha · Jefe Procesos Químicos','TechDent Chile — Experto en Formulación',`
+  openModal('🧪 Sebastián Rocha . Jefe Procesos Químicos','TechDent Chile — Experto en Formulación',`
   <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
     <div style="font-size:44px">👨‍🔬</div>
     <div>
       <div style="color:#45d4ff;font-weight:700;font-size:13px">Sebastián Rocha</div>
-      <div style="font-size:10px;color:#5a7a8a">12 años en TechDent · Ing. Química UC</div>
+      <div style="font-size:10px;color:#5a7a8a">12 años en TechDent . Ing. Química UC</div>
     </div>
   </div>
   ${_sebInvestResult?`<div class="ibox green" style="margin-bottom:10px"><strong>🔬 Resultado Investigación:</strong> ${_sebInvestResult}<br><button class="btn-p" style="margin-top:6px;font-size:10px" onclick="applySebResult()">Implementar (+180 pts)</button></div>`:''}
@@ -3212,7 +3212,7 @@ window.sebInvestigate=function(){
   _sebInvestigating=true; _sebInvestResult=null;
   closeModal();
   notify('info','🔬 Sebastián investiga','Sebastián fue al laboratorio. Regresa en 45 segundos con resultados.');
-  showStory('Sebastián Rocha · Laboratorio','"Voy a revisar las últimas muestras y los datos del proceso. Esto puede mejorar nuestra eficiencia o calidad notablemente."');
+  showStory('Sebastián Rocha . Laboratorio','"Voy a revisar las últimas muestras y los datos del proceso. Esto puede mejorar nuestra eficiencia o calidad notablemente."');
   const results=[
     {txt:'Detecté que la temperatura de sellado varía ±12°C en la tarde — la máquina necesita recalibración. Si la ajustas al rango exacto, los defectos de sello bajan un 15%.',kpi:{defectRate:-5,quality:8}},
     {txt:'El tiempo de mezclado actual es 48 min cuando el óptimo es 42 min. Reducirlo aumenta throughput sin afectar calidad — ahorramos 14% de energía.',kpi:{efficiency:12,quality:4}},
@@ -3264,7 +3264,7 @@ roofSurf.rotation.x=-Math.PI/2;roofSurf.position.y=13.28;scene.add(roofSurf);
   heli.rotation.x=-Math.PI/2;heli.position.set(-30,0.01,-20);g.add(heli);
   const hLbl=makeLabel('H','#ffffff',1.5,.9);hLbl.position.set(-30,1,-20);g.add(hLbl);
   // View sign
-  const vLbl=makeLabel('🌆 VISTA DESDE LA CIMA · PLANTA TECHDENT','#efb41c',5.5,.55);vLbl.position.set(0,1.8,-38);g.add(vLbl);
+  const vLbl=makeLabel('🌆 VISTA DESDE LA CIMA . PLANTA TECHDENT','#efb41c',5.5,.55);vLbl.position.set(0,1.8,-38);g.add(vLbl);
   g.position.y=13.28;scene.add(g);
 })();
 // Ladder
@@ -3278,7 +3278,7 @@ roofSurf.rotation.x=-Math.PI/2;roofSurf.position.y=13.28;scene.add(roofSurf);
   IOBJ.push({id:'ladder_up',pos:new THREE.Vector3(61,0,8),range:4,hint:'[E] Escalar al Techo'});
   IOBJ.push({id:'ladder_down',pos:new THREE.Vector3(61,13.5,8),range:4,hint:'[E] Bajar al Piso'});
 })();
-function goToRoof(){G.onRoof=true;camera.position.set(56,14.55,2);notify('info','¡En el Techo!','Vista completa de la planta. [E] en la escalera para bajar.');showStory('Tú · Jefe Industrial','"Desde aquí puedo ver toda la línea de producción funcionando. Increíble lo que hemos logrado."');}
+function goToRoof(){G.onRoof=true;camera.position.set(56,14.55,2);notify('info','¡En el Techo!','Vista completa de la planta. [E] en la escalera para bajar.');showStory('Tú . Jefe Industrial','"Desde aquí puedo ver toda la línea de producción funcionando. Increíble lo que hemos logrado."');}
 function goToFloor(){G.onRoof=false;camera.position.set(60,1.72,8);notify('info','De vuelta en planta','Has bajado del techo.');}
 
 // ═══════════════════════════════════════════════════════
@@ -3288,114 +3288,114 @@ const ALL_MISSIONS={
   diff:[
     {id:'d1',trigger:'strategy',
      title:'🧪 MISIÓN 1 — Nueva Fórmula Blanqueadora',
-     from:'Ana Muñoz · Ing. Industrial',
+     from:'Ana Muñoz . Ing. Industrial',
      story:'Marketing llama: Cruz Verde quiere FrescoMax Premium en 5 días. Añade peróxido de carbamida 3% al TANQUE MEZCLADOR.\n\n👉 Ve al Tanque Mezclador (línea de producción, centro-izquierda) → [E]',
      waypoint:'mez',type:'mixing',reward:{quality:12,morale:8,score:180}},
     {id:'d2',trigger:'d1',
      title:'🔬 MISIÓN 2 — Inspeccionar Lote Premium',
-     from:'Diego Torres · Calidad',
+     from:'Diego Torres . Calidad',
      story:'Lote mezclado. Ahora inspecciona tubos en el LABORATORIO DE CALIDAD para que Cruz Verde apruebe.\n\n👉 Ve a Calidad (zona este, amarilla) → [E]',
      waypoint:'quality',type:'sampling',params:{required:4,total:5},reward:{quality:10,defectRate:-3,score:150}},
     {id:'d3',trigger:'d2',
      title:'⚙ MISIÓN 3 — Calibrar Línea para Premium',
-     from:'Sebastián Rocha · Procesos',
+     from:'Sebastián Rocha . Procesos',
      story:'Para calidad premium ajusta el Homogeneizador a 210 bar y la Llenadora a 75ml exactos. Habla con Sebastián y calibra las máquinas.\n\n👉 Ve al Homogeneizador o Llenadora → [E] → aplica parámetros',
      waypoint:'hom',type:'speedDial',params:{target:.85,tol:.15},reward:{quality:8,efficiency:5,score:120}},
     {id:'d_5s',trigger:'d3',
      title:'📐 MISIÓN 4 — Metodología 5S en la Línea',
-     from:'Miguel González · Fantasma Fundador',
+     from:'Miguel González . Fantasma Fundador',
      story:'¡El fantasma de Don Miguel apareció! Dice que la planta está desordenada. Aplica 5S: visita 3 máquinas diferentes y ajusta sus parámetros para ordenar y optimizar.\n\n👉 Ve a cualquier máquina de la línea → [E] → aplica parámetros (necesitas 3)',
      waypoint:'alm',type:'fiveS',reward:{quality:6,efficiency:8,morale:8,score:130}},
     {id:'d_per',trigger:'d_5s',
      title:'👥 MISIÓN 5 — Contratar Equipo ISO',
-     from:'Valentina Ramos · RRHH',
+     from:'Valentina Ramos . RRHH',
      story:'Para certificar FrescoMax® Premium necesitamos personal ISO. Ve a RRHH (zona morada, oeste) y contrata al menos 1 candidato.\n\n👉 Ve a RRHH (zona oeste) → [E] con Valentina → contrata',
      waypoint:'valentina',type:'hrHire',reward:{morale:10,quality:5,score:130}},
     {id:'d_iso',trigger:'d_per',
      title:'📚 MISIÓN 6 — Capacitación ISO 9001',
-     from:'Carlos Mendoza · Capacitador',
+     from:'Carlos Mendoza . Capacitador',
      story:'El equipo nuevo necesita formación. Carlos Mendoza te espera en RRHH.\n\n👉 Ve a RRHH (zona oeste) → [E] con Carlos → completa los 4 módulos',
      waypoint:'trainer',type:'isoTraining',reward:{quality:8,morale:12,score:150}},
     {id:'d_cal',trigger:'d_iso',
      title:'🔍 MISIÓN 7 — Implementar Inspecciones',
-     from:'Diego Torres · Calidad',
+     from:'Diego Torres . Calidad',
      story:'¡Equipo certificado! Coloca al menos 1 punto de control en la línea para detección temprana de defectos.\n\n👉 Presiona [Q] → acércate a una máquina → [E] para colocar inspección',
      waypoint:'quality',type:'qualityInspect',reward:{quality:12,defectRate:-5,score:160}},
     {id:'d_sell',trigger:'d_cal',
      title:'💰 MISIÓN 8 — Producir y Vender Primer Lote',
-     from:'Pedro Soto · Ventas',
+     from:'Pedro Soto . Ventas',
      story:'Cruz Verde está esperando. Acumula al menos 200 unidades en bodega y véndelas. Ve a Logística y usa el botón VENDER del HUD verde.\n\n👉 Ve a Logística (zona sur) → vende desde el HUD bodega',
      waypoint:'logistics',type:'sellStock',params:{minQty:200},reward:{efficiency:5,score:140}},
     {id:'d_car',trigger:'d_sell',
      title:'🚗 MISIÓN 9 — Entrega Urgente a Cruz Verde',
-     from:'Carlos Castro · Despacho',
+     from:'Carlos Castro . Despacho',
      story:'¡Cruz Verde llama! Necesita el pedido YA. Sube al camión de reparto y lleva los productos a la ciudad.\n\n👉 Inicio: Terminal de Carga (sur, verde) → [E]',
      waypoint:'logistics',type:'deliveryGame',reward:{efficiency:12,score:180}},
     {id:'d_log',trigger:'d_car',
      title:'📦 MISIÓN 10 — Optimizar Ruta de Despacho',
-     from:'Carlos Castro · Bodeguero',
+     from:'Carlos Castro . Bodeguero',
      story:'¡Bien! Ahora optimiza la ruta para los próximos despachos y reducir km y costo.\n\n👉 Ve a Logística → [E] → WMS → tab Rutas → Optimizar',
      waypoint:'logistics',type:'wmsOptimize',reward:{efficiency:10,score:140}},
     {id:'d4',trigger:'d_log',
      title:'🎉 MISIÓN 11 — Lanzamiento FrescoMax® Premium',
-     from:'Valentina Ramos · RRHH',
+     from:'Valentina Ramos . RRHH',
      story:'¡Cruz Verde aceptó 10.000 unidades! Celebramos el lanzamiento esta noche.\n\n👉 Habla con Valentina en RRHH para el evento',
      waypoint:'valentina',type:'social',params:{occasion:'lanzamiento'},reward:{morale:22,score:250}},
   ],
   cost:[
     {id:'c1',trigger:'strategy',
      title:'🚀 MISIÓN 1 — Pedido Urgente Walmart Chile',
-     from:'Pedro Soto · Ventas',
+     from:'Pedro Soto . Ventas',
      story:'¡Walmart necesita 40% más unidades! Sube velocidad de línea. Ve al HOMOGENEIZADOR y ajusta los parámetros.\n\n👉 Ve al Homogeneizador (línea central) → [E] → aplica parámetros',
      waypoint:'hom',type:'speedDial',params:{target:1.6,tol:.15},reward:{efficiency:18,defectRate:4,score:160}},
     {id:'c_5s',trigger:'c1',
      title:'📐 MISIÓN 2 — 5S: Ordenar la Línea',
-     from:'Miguel González · Fantasma Fundador',
+     from:'Miguel González . Fantasma Fundador',
      story:'¡El fantasma de Don Miguel apareció en la planta! "La velocidad sin orden es caos". Visita 3 máquinas y aplica parámetros para ordenar y optimizar el flujo.\n\n👉 Visita 3 máquinas diferentes → [E] → aplica parámetros en cada una',
      waypoint:'alm',type:'fiveS',reward:{efficiency:10,quality:5,morale:5,score:130}},
     {id:'c2',trigger:'c_5s',
      title:'⚠ MISIÓN 3 — ¡Alarma Crítica en Llenadora!',
-     from:'Sistema SCADA · Planta',
+     from:'Sistema SCADA . Planta',
      story:'¡ALERTA ROJA! Tubos con 15% bajo peso. Corre al BOTÓN ROJO en la pared oeste.\n\n👉 Corre al botón de parada de emergencia (pared oeste)',
      waypoint:'estop_btn',type:'emergencyStop',params:{time:20},reward:{defectRate:-7,score:200}},
     {id:'c_per',trigger:'c2',
      title:'👥 MISIÓN 4 — Reforzar Equipo',
-     from:'Valentina Ramos · RRHH',
+     from:'Valentina Ramos . RRHH',
      story:'Para manejar el volumen necesitamos más personal. Ve a RRHH (zona morada, oeste).\n\n👉 Ve a RRHH → habla con Valentina → contrata candidatos',
      waypoint:'valentina',type:'hrHire',reward:{morale:10,efficiency:5,score:130}},
     {id:'c_iso',trigger:'c_per',
      title:'📚 MISIÓN 5 — Capacitación del Equipo',
-     from:'Carlos Mendoza · Capacitador',
+     from:'Carlos Mendoza . Capacitador',
      story:'El equipo nuevo necesita capacitación ISO. Carlos te espera en RRHH.\n\n👉 Habla con Carlos en RRHH → completa los módulos',
      waypoint:'trainer',type:'isoTraining',reward:{quality:8,morale:12,score:150}},
     {id:'c3',trigger:'c_iso',
      title:'🚜 MISIÓN 6 — Reordenar Almacén',
-     from:'Carlos Castro · Bodeguero',
+     from:'Carlos Castro . Bodeguero',
      story:'Los pallets llegaron desordenados. Sube al montacargas en Logística y mueve los pallets.\n\n👉 Ve a Logística (sur) → sube al montacargas → mueve 3 pallets',
      waypoint:'fk_enter',type:'forklift',params:{pallets:3},reward:{efficiency:15,score:180}},
     {id:'c_sell',trigger:'c3',
      title:'💰 MISIÓN 7 — Vender Primer Lote Masivo',
-     from:'Pedro Soto · Ventas',
+     from:'Pedro Soto . Ventas',
      story:'Tenemos stock. Acumula al menos 300 unidades y véndelas a Walmart para generar caja.\n\n👉 Usa el botón verde "VENDER" del HUD abajo-derecha',
      waypoint:'logistics',type:'sellStock',params:{minQty:300},reward:{efficiency:5,score:140}},
     {id:'c4',trigger:'c_sell',
      title:'📦 MISIÓN 8 — Revisión Pre-Despacho',
-     from:'Diego Torres · Calidad',
+     from:'Diego Torres . Calidad',
      story:'Antes de despachar a Walmart: ve a Calidad e inspecciona 3 tubos manualmente.\n\n👉 Ve a Calidad (zona este, amarilla) → [E]',
      waypoint:'quality',type:'sampling',params:{required:3,total:5},reward:{quality:6,score:120}},
     {id:'c_car',trigger:'c4',
      title:'🚗 MISIÓN 9 — Entrega Express a Walmart',
-     from:'Carlos Castro · Despacho',
+     from:'Carlos Castro . Despacho',
      story:'¡Walmart necesita el pedido urgente! Sube al camión de reparto y lleva los productos a la ciudad.\n\n👉 Inicio: Terminal de Carga (sur, verde) → [E]',
      waypoint:'logistics',type:'deliveryGame',reward:{efficiency:10,score:160}},
     {id:'c_log',trigger:'c_car',
      title:'📦 MISIÓN 10 — Optimizar Ruta',
-     from:'Carlos Castro · Bodeguero',
+     from:'Carlos Castro . Bodeguero',
      story:'Optimiza la ruta de despacho para reducir km.\n\n👉 Ve a Logística → [E] → WMS → Rutas → Optimizar',
      waypoint:'logistics',type:'wmsOptimize',reward:{efficiency:8,score:140}},
     {id:'c5',trigger:'c_log',
      title:'🍻 MISIÓN 11 — ¡Happy Hour del Equipo!',
-     from:'Marco Fuentes · Operario',
+     from:'Marco Fuentes . Operario',
      story:'¡Despachamos a Walmart a tiempo y bajo costo!\n\n👉 Habla con Valentina en RRHH para celebrar',
      waypoint:'valentina',type:'social',params:{occasion:'happy_hour'},reward:{morale:25,score:220}},
   ],
@@ -3485,7 +3485,7 @@ function finishMission(m){
   // Show progress
   if(mIdx<mTotal){
     const nextM=pool[mIdx];
-    if(nextM) showStory('Sistema · Siguiente Misión',`"Misión ${mIdx+1}/${mTotal}: ${nextM.title}" — ${nextM.story.split('\n')[0]}`);
+    if(nextM) showStory('Sistema . Siguiente Misión',`"Misión ${mIdx+1}/${mTotal}: ${nextM.title}" — ${nextM.story.split('\n')[0]}`);
   }
   // Aliens solo aparecen en la batalla final con Juan — NO durante las misiones normales
   setTimeout(()=>checkMissionTrigger(m.id),2500);
@@ -3529,13 +3529,13 @@ function launchWMSOptimize(m){
   G._wmsMissionPending=m;
 }
 
-// ── 5S: visitar 3 máquinas y aplicar parámetros ──────────
+// -- 5S: visitar 3 máquinas y aplicar parámetros ----------
 function launchFiveS(m){
   G._fiveSMission=m;
   G._fiveSCount=0;
   setWaypoint('alm');
   notify('info','🏭 Misión 5S — Ordenar la Línea','¡El fantasma de Don Miguel pide orden! Visita 3 máquinas de la línea → [E] → aplica parámetros en cada una.');
-  showStory('👻 Miguel González · Fundador','"La metodología 5S: Clasificar, Ordenar, Limpiar, Estandarizar, Sostener. Sin orden no hay calidad. Visita 3 máquinas y optimiza sus parámetros."');
+  showStory('👻 Miguel González . Fundador','"La metodología 5S: Clasificar, Ordenar, Limpiar, Estandarizar, Sostener. Sin orden no hay calidad. Visita 3 máquinas y optimiza sus parámetros."');
   // Hacer aparecer a Miguel cerca del jugador
   if(miguelGhost){
     miguelGhost.visible=true;
@@ -3544,7 +3544,7 @@ function launchFiveS(m){
   }
 }
 
-// ── Vender stock: esperar que bodega tenga minQty ────────
+// -- Vender stock: esperar que bodega tenga minQty --------
 function launchSellStock(m){
   G._sellMission=m;
   const minQty=m.params?.minQty||100;
@@ -3648,14 +3648,14 @@ function renderSampling(){
   ${fin?`<div class="ibox ${passed>=req?'green':'red'}" style="text-align:center"><strong>${passed>=req?`✓ Lote APROBADO (${passed}/${total} pasan)`:`✗ Lote RECHAZADO (${passed}/${total} pasan, mínimo ${req})`}</strong></div>
   <div style="text-align:center;margin-top:10px"><button class="btn-${passed>=req?'p':'s'}" onclick="sampFinish(${passed>=req})">
     ${passed>=req?'✓ Aprobar y continuar':'↺ Enviar a Reproceso'}</button></div>`:''}`
-  ,`🔬 Inspección Física · ${done}/${total} tubos`);
+  ,`🔬 Inspección Física . ${done}/${total} tubos`);
 }
 window.sampInspect=function(){
   if(_sI) return;_sI=true;
   const ok=Math.random()>(G.kpi.defectRate/100);
   const overlay=document.createElement('div');
   overlay.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:400;background:${ok?'rgba(20,60,20,.95)':'rgba(60,10,10,.95)'};border:2px solid ${ok?'#79df4b':'#ff5050'};border-radius:14px;padding:24px 36px;text-align:center;animation:mgIn .3s ease;pointer-events:none`;
-  overlay.innerHTML=`<div style="font-size:44px">${ok?'✅':'❌'}</div><div style="font-size:15px;font-weight:700;color:${ok?'#79df4b':'#ff5050'};margin:8px 0">${ok?'PASA INSPECCIÓN':'DEFECTO DETECTADO'}</div><div style="font-size:10px;color:#7a9aaa">${ok?`${(75+(Math.random()-.3)).toFixed(1)}ml ✓ · Sello OK · Textura Uniforme`:`${(75-Math.random()*8-3).toFixed(1)}ml ✗ · ${Math.random()>.5?'Sello defectuoso':'Textura irregular'}`}</div>`;
+  overlay.innerHTML=`<div style="font-size:44px">${ok?'✅':'❌'}</div><div style="font-size:15px;font-weight:700;color:${ok?'#79df4b':'#ff5050'};margin:8px 0">${ok?'PASA INSPECCIÓN':'DEFECTO DETECTADO'}</div><div style="font-size:10px;color:#7a9aaa">${ok?`${(75+(Math.random()-.3)).toFixed(1)}ml ✓ . Sello OK . Textura Uniforme`:`${(75-Math.random()*8-3).toFixed(1)}ml ✗ . ${Math.random()>.5?'Sello defectuoso':'Textura irregular'}`}</div>`;
   document.body.appendChild(overlay);
   setTimeout(()=>{overlay.remove();_sR.push(ok);_sI=false;renderSampling();},1100);
 };
@@ -3795,7 +3795,7 @@ const FK_PALLETS=[];
   const dzLbl=makeLabel('ZONA ENTREGA','#79df4b',2.6,.45);dzLbl.position.set(5,1.2,-38);scene.add(dzLbl);
 })();
 function startForkliftMission(m){FK.mission=m;FK.palletsDone=0;notify('info','Misión: Montacargas','Dirígete al montacargas amarillo (zona sur) y presiona [E].');}
-function enterForklift(){FK.active=true;G.inVehicle=true;document.getElementById('vhud').style.display='block';document.getElementById('xh').style.display='none';document.exitPointerLock?.();notify('info','Montacargas Activo','W/S=Mover · A/D=Girar · Espacio=Subir horquillas · Shift=Bajar · F=Salir');}
+function enterForklift(){FK.active=true;G.inVehicle=true;document.getElementById('vhud').style.display='block';document.getElementById('xh').style.display='none';document.exitPointerLock?.();notify('info','Montacargas Activo','W/S=Mover . A/D=Girar . Espacio=Subir horquillas . Shift=Bajar . F=Salir');}
 function exitForklift(){if(FK.carrying){notify('warn','Lleva el pallet','Deposita el pallet en la zona verde antes de salir.');return;}FK.active=false;G.inVehicle=false;FK.speed=0;document.getElementById('vhud').style.display='none';document.getElementById('xh').style.display='block';camera.position.set(FK.mesh.position.x+2.5,1.72,FK.mesh.position.z+2.5);canvas.requestPointerLock();}
 function pickFKPallet(idx){
   if(FK.carrying){notify('warn','Ya estás cargando','Deposita el pallet actual primero.');return;}
@@ -3871,7 +3871,7 @@ function updateFK(dt){
     FK_PALLETS.forEach((p,i)=>{
       if(p.delivered||p.carried)return;
       const d2=Math.hypot(FK.mesh.position.x-p.origX,FK.mesh.position.z-p.origZ);
-      if(d2<bd){bd=d2;bp={id:'fkpal_'+i,fkPalIdx:i,pos:new THREE.Vector3(p.origX,0,p.origZ),range:13,hint:'[E] Recoger pallet · [Espacio] Subir horquillas primero'};}
+      if(d2<bd){bd=d2;bp={id:'fkpal_'+i,fkPalIdx:i,pos:new THREE.Vector3(p.origX,0,p.origZ),range:13,hint:'[E] Recoger pallet . [Espacio] Subir horquillas primero'};}
     });
     G.nearObj=bp||null;
     // Show hint on screen
@@ -4019,7 +4019,7 @@ function renderBudgetAlloc(){
       <div style="font-size:9px;color:#5a7a8a;margin-bottom:5px">${cat.d}</div>
       <input type="range" min="0" max="${cat.max}" step="100000" value="${capVal}" style="width:100%"
         oninput="baSlide('${cat.k}',+this.value)">
-      <div style="font-size:8px;color:#3a6070;margin-top:2px">Máx $${cat.max.toLocaleString()} · Asignado: ${capPct}%</div>
+      <div style="font-size:8px;color:#3a6070;margin-top:2px">Máx $${cat.max.toLocaleString()} . Asignado: ${capPct}%</div>
     </div>`;
   }).join('')}
   ${allGone?`<button class="btn-g" style="width:100%;margin-top:10px;font-size:14px;padding:12px" onclick="confirmInvest()">✓ ¡Confirmar y Comenzar!</button>`:`<div style="text-align:center;font-size:10px;color:#5a7a8a;margin-top:10px">Distribuye todo el presupuesto para comenzar</div>`}
@@ -4078,7 +4078,7 @@ let _miguelTipIdx=0;
     const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,opacity:.88}));
     sprite.scale.set(1.15,1.7,1);sprite.position.y=.85;g.add(sprite);
   });
-  const mLbl=makeLabel('👻 Miguel González · Fundador','#00e5cc',3,.35);mLbl.position.set(0,2.2,0);g.add(mLbl);
+  const mLbl=makeLabel('👻 Miguel González . Fundador','#00e5cc',3,.35);mLbl.position.set(0,2.2,0);g.add(mLbl);
   const mLight=new THREE.PointLight(0x00e5cc,.9,5.5);mLight.position.y=1.8;g.add(mLight);
   ANIMS.blinkers.push({mesh:{material:{emissiveIntensity:0}},phase:0});
   g.position.set(0,0,20);g.visible=false;scene.add(g);miguelGhost=g;
@@ -4087,7 +4087,7 @@ let _miguelTipIdx=0;
 
 function miguelSay(text,type='story'){
   if(miguelGhost) miguelGhost.visible=true;
-  showStory('👻 Miguel González · Fundador (1950–2018)',text);
+  showStory('👻 Miguel González . Fundador (1950–2018)',text);
   if(miguelGhost){
     miguelGhost.position.set(camera.position.x-Math.sin(yaw)*3.5,0,camera.position.z-Math.cos(yaw)*3.5);
     const ghostIobj=IOBJ.find(o=>o.id==='miguel_ghost');
@@ -4103,7 +4103,7 @@ function openMiguelDialog(){
     <img src="assets/miguel_main.jpg" style="width:88px;height:88px;object-fit:cover;border-radius:10px;border:2px solid #00e5cc;box-shadow:0 0 14px #00e5cc55;flex-shrink:0">
     <div>
       <div style="color:#00e5cc;font-weight:700;font-size:14px">Don Miguel González</div>
-      <div style="font-size:10px;color:#5a7a8a">Fundador de TechDent Chile · 40 años de experiencia en manufactura</div>
+      <div style="font-size:10px;color:#5a7a8a">Fundador de TechDent Chile . 40 años de experiencia en manufactura</div>
       <div style="font-size:10px;color:#3a6070;margin-top:4px;font-style:italic">"La planta que ves fue construida ladrillo a ladrillo. Ahora es tu turno."</div>
     </div>
   </div>
@@ -4216,7 +4216,7 @@ const TUTORIAL_STEPS=[
   {title:'Paso 2 — Asigna el Presupuesto',text:'<strong>Distribuye los $5.000.000 CLP</strong> entre maquinaria, RRHH, calidad, marketing y seguridad. Esto define el inicio de la empresa.',arrow:'💰 Completa la asignación',done:()=>G.budget<TOTAL_INVEST},
   {title:'Paso 3 — Primera Misión',text:'Revisa el <strong>briefing de misión</strong> que Miguel González te enviará. Acepta y completa cada tarea para avanzar en la historia.',arrow:'📩 Espera el briefing...',done:()=>G.missionsDone.size>=1},
   {title:'Paso 4 — Explora la Planta',text:'Visita <strong>RRHH</strong> (oeste), <strong>Calidad</strong> (este) y <strong>Logística</strong> (sur). Habla con el equipo y toma decisiones en cada zona.',arrow:'🗺 Explora todas las zonas',done:()=>G.zonesComplete.size>=3},
-  {title:'Paso 5 — Habla con los Trabajadores',text:'Acércate a los <strong>trabajadores</strong> con hardhat amarillo → [E] para dialogar · [R] para golpear (no recomendado). Da bonos para mejorar su rendimiento.',arrow:'👷 Interactúa con el equipo',done:()=>G.missionsDone.size>=2},
+  {title:'Paso 5 — Habla con los Trabajadores',text:'Acércate a los <strong>trabajadores</strong> con hardhat amarillo → [E] para dialogar . [R] para golpear (no recomendado). Da bonos para mejorar su rendimiento.',arrow:'👷 Interactúa con el equipo',done:()=>G.missionsDone.size>=2},
   {title:'Paso 6 — Maximiza las Ganancias',text:'Completa todas las misiones y optimiza los KPIs. Cuando estés listo: presiona <strong>[P]</strong> para presentar los resultados al directorio.',arrow:'🏆 [P] = Presentar Resultados',done:()=>G.resultShown},
 ];
 
@@ -4364,7 +4364,7 @@ function triggerAlienEvent(){
   alienEventFired=true;
 
   // Step 1: Big warning overlay with clear instructions
-  openModal('🚨 ¡ALERTA DE SABOTAJE!','Sistema SCADA · Interferencia Externa Detectada',`
+  openModal('🚨 ¡ALERTA DE SABOTAJE!','Sistema SCADA . Interferencia Externa Detectada',`
   <div class="ibox red" style="text-align:center;padding:18px">
     <div style="font-size:48px;margin-bottom:10px">👾</div>
     <h3 style="color:#ff5050;margin-bottom:8px">¡Alien Saboteador en la Planta!</h3>
@@ -4387,9 +4387,9 @@ function triggerAlienEvent(){
   </div>
   `,[{label:'🔫 ¡Voy a defenderla!',cls:'btn-danger',fn:()=>{
     closeModal();
-    showStory('📡 Sistema SCADA · Alarma','"ALERTA: Señal de interferencia externa detectada en perímetro. Objeto no identificado se aproxima a la línea de producción."');
+    showStory('📡 Sistema SCADA . Alarma','"ALERTA: Señal de interferencia externa detectada en perímetro. Objeto no identificado se aproxima a la línea de producción."');
     setTimeout(()=>{spawnAlien();setTimeout(()=>showJuan(),4000);},1500);
-    notify('bad','👾 ¡ALIEN en planta!','APUNTA con el mouse · [G] o CLIC para disparar · [R] recargar · ¡Defiende la línea!');
+    notify('bad','👾 ¡ALIEN en planta!','APUNTA con el mouse . [G] o CLIC para disparar . [R] recargar . ¡Defiende la línea!');
   }}]);
 }
 
@@ -4422,7 +4422,7 @@ function updateAliens(dt){
   const hed=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),new THREE.MeshStandardMaterial({color:0xffe0b0,roughness:.9}));hed.position.y=1.9;g.add(hed);
   [-.08,.08].forEach(ex=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.04,6,6),new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff3300,emissiveIntensity:1.5}));e.position.set(ex,.04,.2);hed.add(e);});
   const tie=new THREE.Mesh(new THREE.BoxGeometry(.09,.42,.05),new THREE.MeshStandardMaterial({color:0xcc0000,roughness:.6}));tie.position.set(0,.82,.15);g.add(tie);
-  const jLbl2=makeLabel('⚠ JUAN SEIFFERT · Competencia','#ff3300',4,.38);jLbl2.position.set(0,2.65,0);g.add(jLbl2);
+  const jLbl2=makeLabel('⚠ JUAN SEIFFERT . Competencia','#ff3300',4,.38);jLbl2.position.set(0,2.65,0);g.add(jLbl2);
   const jLight=new THREE.PointLight(0xff2200,1.0,6);jLight.position.y=2;g.add(jLight);
   g.position.set(-64,0,0);g.visible=false;scene.add(g);
   juanSeiffert={mesh:g,phase:0};
@@ -4468,11 +4468,11 @@ function confrontJuan(){
   const diffScore=(G.strategy==='diff'?2:0) + G.inspections.length + G.hiredCandidates.size;
   const moralOk=G.kpi.morale>70;
   const kpiOk=G.kpi.quality>75&&G.kpi.defectRate<8;
-  openModal('🦹 CONFRONTACIÓN FINAL — Juan Seiffert','Gerente de CompetidorCorp · Amenaza Estratégica',`
+  openModal('🦹 CONFRONTACIÓN FINAL — Juan Seiffert','Gerente de CompetidorCorp . Amenaza Estratégica',`
   <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
     <div style="font-size:44px">🦹</div>
     <div>
-      <div style="color:#ff3300;font-weight:700;font-size:14px">Juan Seiffert · CEO CompetidorCorp</div>
+      <div style="color:#ff3300;font-weight:700;font-size:14px">Juan Seiffert . CEO CompetidorCorp</div>
       <div style="font-size:10px;color:#5a7a8a;font-style:italic">"TechDent va a desaparecer. Tengo más capital, más contactos y mejores máquinas."</div>
     </div>
   </div>
@@ -4548,7 +4548,7 @@ window.jsBattle=function(opcion){
       <div style="text-align:center;padding:16px">
         <div style="font-size:56px;margin-bottom:10px">🏆</div>
         <div class="ibox green" style="font-size:13px;line-height:1.8">${detail}</div>
-        <div class="ibox gold" style="margin-top:10px"><strong>+500 puntos · Juan Seiffert eliminado del mercado</strong></div>
+        <div class="ibox gold" style="margin-top:10px"><strong>+500 puntos . Juan Seiffert eliminado del mercado</strong></div>
         <div class="ibox" style="margin-top:10px;font-size:11px"><strong>📊 Concepto ICI:</strong> La ventaja competitiva sostenible (Porter) proviene de estrategias coherentes entre todas las áreas de la empresa. Tú demostraste eso.</div>
       </div>
       `,[{label:'Ver Benchmark Final',cls:'btn-g',fn:()=>{closeModal();showFinalResult();}}]);
@@ -4600,7 +4600,7 @@ function updateWarehouseHUD(){
   const re=document.getElementById('wh-rate');
   if(el) el.textContent=PROD.warehouse.toLocaleString();
   const rate=Math.round(G.kpi.efficiency*0.6*(G.lineSpeed||1));
-  if(re) re.textContent=`+${rate} ud/min · ${PROD.defectLost} rechazadas`;
+  if(re) re.textContent=`+${rate} ud/min . ${PROD.defectLost} rechazadas`;
 }
 
 // Tick de producción — se llama en el loop principal
@@ -4649,7 +4649,7 @@ window.openSellModal=function(){
     {qty:800, label:'Lote mediano', client:'Cruz Verde'},
     {qty:2000,label:'Lote grande',  client:'Walmart Chile'},
   ].filter(l=>l.qty<=PROD.warehouse);
-  openModal('💰 Vender Producto Terminado','Bodega → Cliente · TechDent Chile',`
+  openModal('💰 Vender Producto Terminado','Bodega → Cliente . TechDent Chile',`
   <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(121,223,75,.07);border-radius:8px;margin-bottom:12px">
     <div><div style="font-size:9px;color:#5a7a8a">Stock disponible</div>
       <div style="font-size:24px;font-weight:900;color:#79df4b">${PROD.warehouse.toLocaleString()} ud</div></div>
@@ -4682,8 +4682,8 @@ window.sellLote=function(qty){
   addScore(Math.round(qty/10));
   PROD.pendingOrders.forEach(o=>{if(o.delivered<o.qty) o.delivered=Math.min(o.qty,o.delivered+qty);});
   closeModal();
-  notify('success',`💰 Venta: ${qty.toLocaleString()} ud`,`+$${income.toLocaleString()} CLP · Saldo: $${G.budget.toLocaleString()}`);
-  showStory('Sistema · Ventas TechDent',`"${qty} unidades FrescoMax® despachadas. Ingresos: $${income.toLocaleString()} CLP."`);
+  notify('success',`💰 Venta: ${qty.toLocaleString()} ud`,`+$${income.toLocaleString()} CLP . Saldo: $${G.budget.toLocaleString()}`);
+  showStory('Sistema . Ventas TechDent',`"${qty} unidades FrescoMax® despachadas. Ingresos: $${income.toLocaleString()} CLP."`);
 };
 
 function startOperatingCosts(){
@@ -4882,7 +4882,7 @@ const MOTO={active:false,mesh:null,angle:0,speed:0,lean:0};
   IOBJ.push({id:'moto_enter',pos:new THREE.Vector3(0,0,38),range:3.5,hint:'[E] Subir a la Moto 🏍️'});
 })();
 
-function enterMoto(){MOTO.active=true;G.inVehicle=true;document.getElementById('vhud').style.display='block';document.getElementById('xh').style.display='none';document.exitPointerLock?.();notify('info','🏍️ Moto activada','W/S=acelerar · A/D=girar · F=salir · Sin horquillas — solo velocidad');}
+function enterMoto(){MOTO.active=true;G.inVehicle=true;document.getElementById('vhud').style.display='block';document.getElementById('xh').style.display='none';document.exitPointerLock?.();notify('info','🏍️ Moto activada','W/S=acelerar . A/D=girar . F=salir . Sin horquillas — solo velocidad');}
 function exitMoto(){MOTO.active=false;G.inVehicle=false;MOTO.speed=0;document.getElementById('vhud').style.display='none';document.getElementById('xh').style.display='block';camera.position.set(MOTO.mesh.position.x+2,1.72,MOTO.mesh.position.z+2);canvas.requestPointerLock();}
 function updateMoto(dt){
   if(!MOTO.active||!MOTO.mesh) return;
@@ -4964,7 +4964,7 @@ function goFromMezzanine(){G.onMezzanine=false;camera.position.set(56,1.72,26);n
     const w=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.35,16),darkM);w.rotation.z=Math.PI/2;w.position.set(wx,wy,wz);g.add(w);
   });
   // Company logo label
-  const tLbl=makeLabel('🚚 TechDent Despacho · FRESCO','#f4c200',4,.5);tLbl.position.set(0,3.2,0);g.add(tLbl);
+  const tLbl=makeLabel('🚚 TechDent Despacho . FRESCO','#f4c200',4,.5);tLbl.position.set(0,3.2,0);g.add(tLbl);
   // Headlights
   const hl3=new THREE.PointLight(0xffffee,1,15);hl3.position.set(0,1.5,-6.5);g.add(hl3);
   g.position.set(16,0,-43);g.rotation.y=Math.PI*.5;scene.add(g);
@@ -4973,7 +4973,7 @@ function goFromMezzanine(){G.onMezzanine=false;camera.position.set(56,1.72,26);n
 
 function openTruckDock(){
   openModal('🚚 Camión de Despacho','Turno de Carga — TechDent Chile S.A.',`
-  <div class="ibox gold"><strong>Pedido Activo:</strong> Walmart Chile — 2.500 cajas FrescoMax® · Despacho en 4 horas.</div>
+  <div class="ibox gold"><strong>Pedido Activo:</strong> Walmart Chile — 2.500 cajas FrescoMax® . Despacho en 4 horas.</div>
   <div class="two-col" style="margin:12px 0">
     <div>
       <span class="sec-l">Estado del Camión</span>
@@ -5180,10 +5180,10 @@ document.getElementById('btn-start').addEventListener('click',()=>{
   animate(0);
   canvas.requestPointerLock();
   setTimeout(()=>{
-    showStory('Miguel González · Director de Carrera',
+    showStory('Miguel González . Director de Carrera',
       'Bienvenido a TechDent Chile. Comenzamos con el benchmarking estratégico. Dirígete a la Sala de Decisiones (al fondo de la planta) y define si competimos por diferenciación o costos.');
   }, 800);
-  setTimeout(()=>notify('info','Primeros pasos','Dirígete a la Sala de Decisiones [zona CYAN al fondo]. [Q]=Inspección · [G] o Click=Disparar pistola · [R]=Recargar'),3000);
+  setTimeout(()=>notify('info','Primeros pasos','Dirígete a la Sala de Decisiones [zona CYAN al fondo]. [Q]=Inspección . [G] o Click=Disparar pistola . [R]=Recargar'),3000);
   setTimeout(()=>notify('info','🔫 Pistola equipada','Tienes una pistola con 30 balas. [G] o Click izquierdo para disparar a los aliens que invadan la planta.'),8000);
 });
 
